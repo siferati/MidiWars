@@ -2,19 +2,20 @@ package com.midiwars;
 
 import com.midiwars.logic.MidiWars;
 
-import javax.sound.midi.InvalidMidiDataException;
-import java.io.IOException;
-
+/**
+ * Entry point for the application.
+ */
 public class Main {
 
+    /**
+     * Entry point for the application.
+     *
+     * @param args Arguments.
+     */
     public static void main(String[] args) {
 
         System.out.println("Starting");
 
-        try {
-            new MidiWars().readMidiFile();
-        }
-
-        catch (Exception e) {}
+        new MidiWars();
     }
 }
