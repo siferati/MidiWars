@@ -12,7 +12,7 @@ import static com.midiwars.logic.instruments.Instrument.OctaveOp.*;
 import static com.midiwars.logic.midi.Note.Name.C;
 
 /**
- * Represents a musical instrument. TODO refactor prevous note into currentOctave
+ * Represents a musical instrument. TODO refactor previous note into current skill bar (enum low, medium, high)
  */
 public abstract class Instrument {
 

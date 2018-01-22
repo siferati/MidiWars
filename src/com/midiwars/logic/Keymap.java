@@ -9,7 +9,7 @@ import static com.midiwars.logic.midi.Note.Name.*;
 import static java.awt.event.KeyEvent.*;
 
 /**
- * This class maps Notes to keybinds
+ * This class maps Notes to keybinds TODO refactor into skill slots. C_KEYBIND -> SLOT1_KEYBIND etc. Create keybar (keyboard + skillbar). Each instrument has its own. It maps slots to keybinds
  */
 public class Keymap {
 
