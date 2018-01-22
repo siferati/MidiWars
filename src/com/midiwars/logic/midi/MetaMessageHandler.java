@@ -1,6 +1,5 @@
-package com.midiwars.logic.MessageHandlers;
+package com.midiwars.logic.midi;
 
-import com.midiwars.logic.Score;
 import javax.sound.midi.MetaMessage;
 
 /**
@@ -22,10 +21,10 @@ public class MetaMessageHandler {
     /**
      * Called when a MetaMessage is received.
      *
-     * @param score Midi timeline.
+     * @param midiTimeline midi timeline.
      * @param metaMessage Message received.
      */
-    public static void metaMessageHandler(Score score, MetaMessage metaMessage) {
+    public static void metaMessageHandler(MidiTimeline midiTimeline, MetaMessage metaMessage) {
 
         switch (metaMessage.getType()) {
 
@@ -37,7 +36,7 @@ public class MetaMessageHandler {
 
             case SET_TEMPO: {
 
-                setTempo(score, metaMessage);
+                setTempo(midiTimeline, metaMessage);
                 break;
             }
 
@@ -50,12 +49,12 @@ public class MetaMessageHandler {
     /** TODO this assumes time signature is x/4
      * Called when MetaMessage is of type SET_TEMPO.
      *
-     * @param score Midi timeline.
+     * @param midiTimeline midi timeline.
      * @param metaMessage Message received.
      *
-     * @see #metaMessageHandler(Score, MetaMessage)
+     * @see #metaMessageHandler(MidiTimeline, MetaMessage)
      */
-    private static void setTempo(Score score, MetaMessage metaMessage) {
+    private static void setTempo(MidiTimeline midiTimeline, MetaMessage metaMessage) {
 
         // read message data
         byte[] data = metaMessage.getData();
@@ -64,6 +63,6 @@ public class MetaMessageHandler {
         int mspq = (data[0] & 0xff) << 16 | (data[1] & 0xff) << 8 | (data[2] & 0xff);
 
         // 1 min = 60 s = 60 000 000 ms
-        score.setTempo((60 * 1000000) / mspq);
+        midiTimeline.setTempo((60 * 1000000) / mspq);
     }
 }

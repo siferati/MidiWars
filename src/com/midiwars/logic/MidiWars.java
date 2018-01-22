@@ -1,5 +1,7 @@
 package com.midiwars.logic;
 
+import com.midiwars.logic.midi.MidiTimeline;
+
 import javax.sound.midi.*;
 import java.io.IOException;
 
@@ -11,8 +13,8 @@ public class MidiWars {
     /* --- DEFINES --- */
 
     // TODO filepaths
-    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\Midi Files\\Memory - Undertale.mid";
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\Midi Files\\Light your heart up - Kill la Kill.mid";
+    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale.mid";
+    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill.mid";
 
 
     /* --- ATTRIBUTES --- */
@@ -26,7 +28,7 @@ public class MidiWars {
     public MidiWars() {
 
         try {
-            Score score = new Score(FILEPATH);
+            MidiTimeline midiTimeline = new MidiTimeline(FILEPATH);
         }
         catch (InvalidMidiDataException | IOException e) {
             e.printStackTrace();

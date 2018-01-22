@@ -1,4 +1,4 @@
-package com.midiwars.logic;
+package com.midiwars.logic.midi;
 
 /**
  * Represents a musical note.

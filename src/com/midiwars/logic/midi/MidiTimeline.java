@@ -1,4 +1,4 @@
-package com.midiwars.logic;
+package com.midiwars.logic.midi;
 
 import javax.sound.midi.*;
 import java.io.File;
@@ -7,14 +7,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-import static com.midiwars.logic.MessageHandlers.MetaMessageHandler.metaMessageHandler;
-import static com.midiwars.logic.MessageHandlers.ShortMessageHandler.shortMessageHandler;
+import static com.midiwars.logic.midi.MetaMessageHandler.metaMessageHandler;
+import static com.midiwars.logic.midi.ShortMessageHandler.shortMessageHandler;
 
 /**
  * Represents the timeline of a given midi file.
  * Holds information about all the notes played, their start time and duration.
  */
-public class Score {
+public class MidiTimeline {
 
     /* --- DEFINES --- */
 
@@ -38,10 +38,10 @@ public class Score {
      *
      * @param filepath Path to midi file.
      *
-     * @throws InvalidMidiDataException Midi file is invalid.
+     * @throws InvalidMidiDataException midi file is invalid.
      * @throws IOException Can't open file.
      */
-    public Score(String filepath) throws InvalidMidiDataException, IOException {
+    public MidiTimeline(String filepath) throws InvalidMidiDataException, IOException {
 
         sequence = null;
         timeline = new ArrayList<>();
@@ -84,12 +84,12 @@ public class Score {
      *
      * @param filepath Path to midi file.
      *
-     * @throws InvalidMidiDataException Midi file is invalid.
+     * @throws InvalidMidiDataException midi file is invalid.
      * @throws IOException Can't open file.
      */
     public void constructTimeline(String filepath) throws InvalidMidiDataException, IOException {
 
-        // read sequence from midi file
+        // read Sequence from midi file
         sequence = MidiSystem.getSequence(new File(filepath));
 
         // iterate through every Track
@@ -114,7 +114,6 @@ public class Score {
 
                 // case MetaMessage
                 else if (message instanceof MetaMessage) {
-
                    metaMessageHandler(this, (MetaMessage) message);
                 }
 
