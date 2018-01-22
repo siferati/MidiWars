@@ -5,13 +5,14 @@ import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.logic.midi.Note;
 
 import java.awt.*;
+import java.security.Key;
 import java.util.ArrayList;
 
 import static com.midiwars.logic.instruments.Instrument.OctaveOp.*;
 import static com.midiwars.logic.midi.Note.Name.C;
 
 /**
- * Represents a musical instrument.
+ * Represents a musical instrument. TODO refactor prevous note into currentOctave
  */
 public abstract class Instrument {
 
@@ -20,8 +21,8 @@ public abstract class Instrument {
     /** Octave operations. */
     public enum OctaveOp {UP, DOWN}
 
-    /** Amount of time robot sleeps in-between operations (ms). */
-    public static int ROBOT_SLEEP = 10;
+    /** Amount of time robot sleeps after an octave change (ms). */
+    public static int ROBOT_SLEEP = 0;
 
 
     /* --- ATTRIBUTES --- */
@@ -44,8 +45,11 @@ public abstract class Instrument {
     /** True if the instrument can hold notes (ie note duration matters). */
     private final boolean canHold;
 
-    /** Note that appears twice in a single octave (it's usually C) */
+    /** Note that appears twice in a single octave (it's usually C). */
     private final Note.Name repeatedNote;
+
+    /** True if the repeated note is currently being held. */
+    private boolean holdingRepeatedNote;
 
 
     /* --- METHODS --- */
@@ -68,6 +72,7 @@ public abstract class Instrument {
         this.previousNote = idleNote;
         this.repeatedNote = repeatedNote;
         this.canHold = canHold;
+        holdingRepeatedNote = false;
     }
 
 
@@ -84,7 +89,6 @@ public abstract class Instrument {
 
         Keymap keymap = new Keymap();
         Robot robot = new Robot();
-        robot.setAutoDelay(ROBOT_SLEEP);
 
         for (int i = 0; i < timeline.size(); i++) {
 
@@ -92,9 +96,21 @@ public abstract class Instrument {
 
             int deltaOctave = note.getOctave() - previousNote.getOctave();
 
+            // true if an octave change was prevented (cause it was unneeded)
+            boolean changePrevented = false;
+
             // prevents unneeded octave changes
-            if (Math.abs(deltaOctave) == 1 && note.getName() == repeatedNote) {
-                deltaOctave = 0;
+            if (deltaOctave != 0 && note.getName() == repeatedNote) {
+                if (deltaOctave < 0) {
+                    deltaOctave++;
+                } else {
+                    deltaOctave--;
+                }
+                changePrevented = true;
+            }
+
+            if (note.isOn()) {
+                System.out.println("debug: delta: " + deltaOctave);
             }
 
             // note not in range, skip
@@ -117,65 +133,62 @@ public abstract class Instrument {
             // play note
             if (note.isOn()) {
 
-                // change octaves if needed
-                if (note.getName() != repeatedNote) {
+                // change octaves
+                for (int j = 0; j < Math.abs(deltaOctave); j++) {
 
-                    for (int j = 0; j < Math.abs(deltaOctave); j++) {
+                    // up
+                    if (deltaOctave > 0) {
 
-                        // up
-                        if (deltaOctave > 0) {
+                        keybind = keymap.octaveOpToKeybind(UP);
+                        robot.keyPress(keybind);
+                        robot.keyRelease(keybind);
 
-                            keybind = keymap.octaveOpToKeybind(UP);
-                            robot.keyPress(keybind);
-                            robot.keyRelease(keybind);
-
-                            // update delay
-                            delay -= ROBOT_SLEEP * 2;
-
-                            System.out.println("debug: Octave Up");
-                        }
-                        // down
-                        else {
-
-                            keybind = keymap.octaveOpToKeybind(DOWN);
-                            robot.keyPress(keybind);
-                            robot.keyRelease(keybind);
-
-                            // update delay
-                            delay -= ROBOT_SLEEP * 2;
-
-                            System.out.println("debug: Octave Down");
-                        }
+                        System.out.println("debug: Octave Up");
                     }
+                    // down
+                    else {
+
+                        keybind = keymap.octaveOpToKeybind(DOWN);
+                        robot.keyPress(keybind);
+                        robot.keyRelease(keybind);
+
+                        System.out.println("debug: Octave Down");
+                    }
+
+                    // needed for octave change to take effect
+                    robot.delay(ROBOT_SLEEP);
+
+                    // update delay
+                    delay -= ROBOT_SLEEP;
                 }
 
                 // play note
-                keybind = keymap.noteToKeybind(note.getName());
+                if (changePrevented) {
+                    keybind = Keymap.REPEATED_NOTE_KEYBIND;
+                } else {
+                    keybind = keymap.noteToKeybind(note.getName());
+                }
                 robot.keyPress(keybind);
 
                 System.out.println("debug: Played: " + note);
 
-                // update delay
-                delay -= ROBOT_SLEEP;
-
-                // if can't hold notes, release key after auto delay
+                // if can't hold notes, release key
                 if (!canHold) {
-
                     robot.keyRelease(keybind);
-
-                    // update delay
-                    delay -= ROBOT_SLEEP;
+                } else if (changePrevented) {
+                    holdingRepeatedNote = true;
                 }
             }
 
             // release note
             else if (canHold) {
-
-                keybind = keymap.noteToKeybind(note.getName());
+                if (note.getName() == repeatedNote && holdingRepeatedNote) {
+                    keybind = Keymap.REPEATED_NOTE_KEYBIND;
+                    holdingRepeatedNote = false;
+                } else {
+                    keybind = keymap.noteToKeybind(note.getName());
+                }
                 robot.keyRelease(keybind);
-
-                // update delay
-                delay -= ROBOT_SLEEP;
             }
 
             if (delay > 0) {
@@ -183,7 +196,9 @@ public abstract class Instrument {
             }
 
             // prepare next ite
-            previousNote = note;
+            if (note.getName() != repeatedNote) {
+                previousNote = note;
+            }
         }
 
         // return to idle note's octave
@@ -191,14 +206,16 @@ public abstract class Instrument {
         int deltaOctave = idleNote.getOctave() - previousNote.getOctave();
         int keybind;
         for (int j = 0; j < Math.abs(deltaOctave); j++) {
-            if (deltaOctave < 0) {
+            if (deltaOctave > 0) {
                 keybind = keymap.octaveOpToKeybind(UP);
                 robot.keyPress(keybind);
                 robot.keyRelease(keybind);
+                System.out.println("debug: Octave Up");
             } else {
-                keybind = keymap.octaveOpToKeybind(UP);
+                keybind = keymap.octaveOpToKeybind(DOWN);
                 robot.keyPress(keybind);
                 robot.keyRelease(keybind);
+                System.out.println("debug: Octave Down");
             }
         }
     }

@@ -14,8 +14,8 @@ public class MidiWars {
 
     /* --- DEFINES --- */
 
-    // TODO filepaths
-    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
+    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\test.mid";
+    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill.mid";
 
 
@@ -43,7 +43,6 @@ public class MidiWars {
             Thread.sleep(5000);
 
             magBell.play(midiTimeline);
-
         }
         catch (InvalidMidiDataException | IOException | AWTException | InterruptedException e) {
             e.printStackTrace();

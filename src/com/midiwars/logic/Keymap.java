@@ -22,6 +22,7 @@ public class Keymap {
     public static int G_KEYBIND = VK_NUMPAD5;
     public static int A_KEYBIND = VK_NUMPAD6;
     public static int B_KEYBIND = VK_NUMPAD7;
+    public static int REPEATED_NOTE_KEYBIND = VK_NUMPAD8;
     public static int OCTAVEUP_KEYBIND = VK_NUMPAD9;
     public static int OCTAVEDOWN_KEYBIND = VK_NUMPAD0;
 
