@@ -49,10 +49,6 @@ public class MidiTimeline {
 
         // read the midi file and construct its timeline
         constructTimeline(filepath);
-
-        for (Note note: timeline) {
-            System.out.println("debug: " + note);
-        }
     }
 
 
@@ -65,14 +61,8 @@ public class MidiTimeline {
             @Override
             public int compare(Note n1, Note n2) {
 
-                // timestamp -> octave -> note name
-                if (n1.getTimestamp() < n2.getTimestamp()) return -1;
-                else if (n1.getTimestamp() > n2.getTimestamp()) return 1;
-                else if (n1.getOctave() < n2.getOctave()) return -1;
-                else if (n1.getOctave() > n2.getOctave()) return 1;
-                else if (n1.getName().ordinal() < n2.getName().ordinal()) return -1;
-                else if (n1.getName().ordinal() > n2.getName().ordinal()) return 1;
-                else return 0;
+                if (n1.getTimestamp() == n2.getTimestamp()) return n1.compareTo(n2);
+                else return Double.compare(n1.getTimestamp(), n2.getTimestamp());
             }
         });
     }

@@ -3,7 +3,7 @@ package com.midiwars.logic.midi;
 /**
  * Represents a musical note.
  */
-public class Note {
+public class Note implements Comparable<Note> {
 
     /* --- DEFINES --- */
 
@@ -16,6 +16,9 @@ public class Note {
 
     /* --- ATTRIBUTES --- */
 
+    /** True if NOTE_ON, False if NOTE_OFF. */
+    private final boolean on;
+
     /** Key number [0-127]. */
     private final int key;
 
@@ -26,10 +29,10 @@ public class Note {
     private final int octave;
 
     /** Moment in time this note was played (ms). */
-    private final double timestamp;
+    private final int timestamp;
 
     /** How long the note was played for (ms). */
-    private double duration;
+    private int duration;
 
 
     /* --- METHODS --- */
@@ -37,13 +40,32 @@ public class Note {
     /**
      * Constructor.
      *
+     * @param name Name of the note.
+     * @param octave Octave of the note.
+     */
+    public Note(Name name, int octave) {
+
+        on = true;
+        key = (octave + 1) * NOTES_PER_OCTAVE + name.ordinal();
+        this.name = name;
+        this.octave = octave;
+        duration = 0;
+        timestamp = 0;
+    }
+
+
+    /**
+     * Constructor.
+     *
+     * @param on True if NOTE_ON, False if NOTE_OFF.
      * @param key Key number [0-127].
      * @param tick NOTE_ON time-stamp (ticks).
      * @param resolution Number of ticks per quarter note (PPQ), or per SMPTE frame (SMPTE).
      * @param tempo Current tempo (BPM).
      */
-    public Note(int key, long tick, int resolution, int tempo) {
+    public Note(boolean on, int key, long tick, int resolution, int tempo) {
 
+        this.on = on;
         this.key = key;
         octave = (key / NOTES_PER_OCTAVE) - 1;
         name = Name.values()[key % NOTES_PER_OCTAVE];
@@ -51,12 +73,12 @@ public class Note {
         // this is set when note is released
         duration = 0;
 
-        timestamp = ticksToSeconds(tick, resolution, tempo);
+        timestamp = ticksToMilliseconds(tick, resolution, tempo);
     }
 
 
     /**
-     * Converts ticks to seconds,
+     * Converts ticks to milliseconds,
      * according to given tempo and resolution.
      *
      * @param tick Ticks.
@@ -65,11 +87,11 @@ public class Note {
      *
      * @return Seconds.
      */
-    private double ticksToSeconds(long tick, int resolution, int tempo) {
+    private int ticksToMilliseconds(long tick, int resolution, int tempo) {
 
         // TODO SMPTE
         double ticksPerSecond = resolution * (tempo / 60.0);
-        return tick / ticksPerSecond;
+        return (int) ((tick / ticksPerSecond) * 1000);
     }
 
 
@@ -81,14 +103,37 @@ public class Note {
      * @param tempo Current tempo (BPM).
      */
     public void setDuration(long tick, int resolution, int tempo) {
-        this.duration = ticksToSeconds(tick, resolution, tempo) - timestamp;
+        this.duration = ticksToMilliseconds(tick, resolution, tempo) - timestamp;
+    }
+
+
+    @Override
+    public int compareTo(Note n) {
+
+        if (octave == n.octave) {
+            return Integer.compare(name.ordinal(), n.name.ordinal());
+        } else {
+            return Integer.compare(octave, n.octave);
+        }
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        return name == name && octave == octave;
     }
 
 
     @Override
     public String toString() {
-        return "NOTE_ON: " + Math.round(timestamp * 10) / 10.0 + ", NOTE: " + name + octave + ", NOTE_OFF: " +
-                Math.round((timestamp + duration) * 10) / 10.0;
+        if (on) {
+            //return "NOTE_ON: " + Math.round(timestamp * 10) / 10.0 + ", NOTE: " + name + octave;
+            return "NOTE_ON: " + timestamp + ", NOTE: " + name + octave;
+        } else {
+            //return "NOTE_OFF: " + Math.round(timestamp * 10) / 10.0 + ", NOTE: " + name + octave;
+            return "NOTE_OFF: " + timestamp + ", NOTE: " + name + octave;
+        }
+
     }
 
 
@@ -107,7 +152,7 @@ public class Note {
      *
      * @return {@link #duration Duration}.
      */
-    public double getDuration() {
+    public int getDuration() {
         return duration;
     }
 
@@ -117,7 +162,7 @@ public class Note {
      *
      * @return {@link #timestamp Timestamp}.
      */
-    public double getTimestamp() {
+    public int getTimestamp() {
         return timestamp;
     }
 
@@ -139,5 +184,15 @@ public class Note {
      */
     public int getOctave() {
         return octave;
+    }
+
+
+    /**
+     * Returns true if {@link #on}, false otherwise.
+     *
+     * @return {@link #on On}.
+     */
+    public boolean isOn() {
+        return on;
     }
 }
