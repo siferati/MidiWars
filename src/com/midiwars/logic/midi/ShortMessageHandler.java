@@ -2,6 +2,9 @@ package com.midiwars.logic.midi;
 
 import javax.sound.midi.ShortMessage;
 
+import static javax.sound.midi.ShortMessage.NOTE_OFF;
+import static javax.sound.midi.ShortMessage.NOTE_ON;
+
 /**
  * Collection of handlers called when dealing with MidiMessages of type ShortMessage.
  */
@@ -18,7 +21,7 @@ public abstract class ShortMessageHandler {
 
         switch (shortMessage.getCommand()) {
 
-            case ShortMessage.NOTE_ON: {
+            case NOTE_ON: {
 
                 noteOn(midiTimeline, shortMessage, tick);
                 break;
@@ -63,7 +66,7 @@ public abstract class ShortMessageHandler {
         int key = shortMessage.getData1();
 
         // add note to timeline
-        midiTimeline.getTimeline().add(new Note(true, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo()));
+        midiTimeline.getTimeline().add(new NoteEvent(NOTE_ON, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo()));
     }
 
 
@@ -82,12 +85,12 @@ public abstract class ShortMessageHandler {
         int key = shortMessage.getData1();
 
         // add note release event to timeline
-        midiTimeline.getTimeline().add(new Note(false, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo()));
+        midiTimeline.getTimeline().add(new NoteEvent(NOTE_OFF, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo()));
 
         // set duration of released note
-        for (Note note : midiTimeline.getTimeline()) {
-            if (note.isOn() && note.getKey() == key && note.getDuration() == 0) {
-                note.setDuration(tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo());
+        for (NoteEvent noteEvent : midiTimeline.getTimeline()) {
+            if (noteEvent.getType() == NOTE_ON && noteEvent.getKey() == key && noteEvent.getNote().duration == 0) {
+                noteEvent.setNoteDuration(tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo());
                 return;
             }
         }

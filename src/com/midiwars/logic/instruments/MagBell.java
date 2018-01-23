@@ -2,29 +2,26 @@ package com.midiwars.logic.instruments;
 
 import com.midiwars.logic.midi.Note;
 
-import static com.midiwars.logic.midi.Note.Name.C;
+import static com.midiwars.logic.midi.Note.Name.*;
 
 public class MagBell extends Instrument {
 
     /* --- DEFINES --- */
 
-    /** {@link Instrument#name Name}. */
+    /** {@link Instrument#name Note}. */
     public final static String NAME = "Magnanimous Choir Bell";
-
-    /** {@link Instrument#lowestNote Lowest Note}. */
-    public final static Note LOWEST_NOTE = new Note(C, 5);
-
-    /** {@link Instrument#highestNote Highest Note}. */
-    public final static Note HIGHEST_NOTE = new Note(C, 7);
-
-    /** {@link Instrument#idleNote Idle Note}. */
-    public final static Note IDLE_NOTE = new Note(C, 5);
-
-    /** {@link Instrument#repeatedNote Repeated Note}. */
-    public final static Note.Name REPEATED_NOTE = C;
 
     /** {@link Instrument#canHold Can Hold}. */
     public final static boolean CAN_HOLD = false;
+
+    /** {@link Instrument#keybars Key bars}. */
+    public final static int[][] KEYBARS = {
+            {72, 74, 76, 77, 79, 81, 83, 84},
+            {84, 86, 88, 89, 91, 93, 95, 96}
+    };
+
+    /** {@link Instrument#idleKeybarIndex Idle Key bar Index}. */
+    public final static int IDLE_KEYBAR_INDEX = 0;
 
 
     /* --- METHODS --- */
@@ -33,6 +30,6 @@ public class MagBell extends Instrument {
      * Constructor.
      */
     public MagBell() {
-        super(NAME, LOWEST_NOTE, HIGHEST_NOTE, IDLE_NOTE, REPEATED_NOTE, CAN_HOLD);
+        super(NAME, CAN_HOLD, KEYBARS, IDLE_KEYBAR_INDEX);
     }
 }

@@ -25,7 +25,7 @@ public class MidiTimeline {
     private Sequence sequence;
 
     /** Notes played. */
-    private ArrayList<Note> timeline;
+    private ArrayList<NoteEvent> timeline;
 
     /** Current tempo of the piece (bpm) (changes upon receiving SET_TEMPO). */
     private int tempo;
@@ -59,7 +59,7 @@ public class MidiTimeline {
 
         Collections.sort(timeline, new Comparator<>() {
             @Override
-            public int compare(Note n1, Note n2) {
+            public int compare(NoteEvent n1, NoteEvent n2) {
 
                 if (n1.getTimestamp() == n2.getTimestamp()) return n1.compareTo(n2);
                 else return Double.compare(n1.getTimestamp(), n2.getTimestamp());
@@ -135,7 +135,7 @@ public class MidiTimeline {
      *
      * @return {@link #timeline Timeline}.
      */
-    public ArrayList<Note> getTimeline() {
+    public ArrayList<NoteEvent> getTimeline() {
         return timeline;
     }
 
