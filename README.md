@@ -12,13 +12,13 @@
 * Handle Tempo changes in multiple tracks
 * Handle time signatures different from x/4
 * Include all instruments
- * Flute
- * ~~Magnanimous Choir Bell~~
- * Marriner's Horn
- * Musical Bass Guitar
- * Musical Harp
- * Musical Lute
- * Unbreakable Choir Bell
+  * Flute
+  * ~~Magnanimous Choir Bell~~
+  * Marriner's Horn
+  * Musical Bass Guitar
+  * Musical Harp
+  * Musical Lute
+  * Unbreakable Choir Bell
 * GUI (overlay)
 * GUI (preferences)
 * Handle SMPTE
