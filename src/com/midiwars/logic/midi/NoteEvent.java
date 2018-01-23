@@ -17,11 +17,11 @@ public class NoteEvent implements Comparable<NoteEvent> {
     /** Number of the key that originated the event [0-127]. */
     private final int key;
 
-    /** Note played. */
-    private final Note note;
-
     /** Moment in time this event was generated (ms). */
     private final int timestamp;
+
+    /** How long the note was played for (ms). */
+    public int duration;
 
 
     /* --- METHODS --- */
@@ -39,7 +39,7 @@ public class NoteEvent implements Comparable<NoteEvent> {
 
         this.type = type;
         this.key = key;
-        note = new Note(key);
+        duration = 0;
         timestamp = ticksToMilliseconds(tick, resolution, tempo);
     }
 
@@ -63,21 +63,21 @@ public class NoteEvent implements Comparable<NoteEvent> {
 
 
     /**
-     * Sets the duration of this event's note based on the NOTE_OFF time-stamp.
+     * Sets the duration of this event based on the NOTE_OFF time-stamp.
      *
      * @param tick NOTE_OFF time-stamp (ticks).
      * @param resolution Number of ticks per quarter note (PPQ), or per SMPTE frame (SMPTE).
      * @param tempo Current tempo (BPM).
      */
     public void setNoteDuration(long tick, int resolution, int tempo) {
-        note.duration = ticksToMilliseconds(tick, resolution, tempo) - timestamp;
+        duration = ticksToMilliseconds(tick, resolution, tempo) - timestamp;
     }
 
 
     @Override
     public int compareTo(NoteEvent e) {
         if (timestamp == e.timestamp) {
-            return note.compareTo(e.note);
+            return Integer.compare(key, e.key);
         } else {
             return Integer.compare(timestamp, e.timestamp);
         }
@@ -87,9 +87,9 @@ public class NoteEvent implements Comparable<NoteEvent> {
     @Override
     public String toString() {
         if (type == ShortMessage.NOTE_ON) {
-            return "NOTE_ON: " + timestamp + ", NOTE: " + note;
+            return "NOTE_ON: " + timestamp + ", KEY: " + key;
         } else {
-            return "NOTE_OFF: " + timestamp + ", NOTE: " + note;
+            return "NOTE_OFF: " + timestamp + ", KEY: " + key;
         }
     }
 
@@ -111,16 +111,6 @@ public class NoteEvent implements Comparable<NoteEvent> {
      */
     public int getTimestamp() {
         return timestamp;
-    }
-
-
-    /**
-     * Returns {@link #note}.
-     *
-     * @return {@link #note Note}.
-     */
-    public Note getNote() {
-        return note;
     }
 
 

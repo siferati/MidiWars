@@ -1,7 +1,8 @@
 package com.midiwars.logic.midi;
 
 /**
- * 'C++ Struct' representing a musical note (note name and octave number)
+ * Deprecated.
+ * 'C++ Struct' representing a musical note (note name and octave number).
  */
 public class Note implements Comparable<Note>{
 

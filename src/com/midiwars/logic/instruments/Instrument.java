@@ -2,7 +2,6 @@ package com.midiwars.logic.instruments;
 
 import com.midiwars.logic.Keymap;
 import com.midiwars.logic.midi.MidiTimeline;
-import com.midiwars.logic.midi.Note;
 import com.midiwars.logic.midi.NoteEvent;
 
 import javax.sound.midi.ShortMessage;
@@ -43,11 +42,8 @@ public abstract class Instrument {
     /** Robot used to simulate system inputs. */
     private Robot robot;
 
-    /** Timestamp of the previous key bar change (ms). */
-    private int previousKeybarChange;
-
-    /** Amount of time playback delayed (ms). */
-    private int millisecondsBehind;
+    /** System time of the previous key bar change (nanosec). */
+    private long previousKeybarChange;
 
 
     /* --- METHODS --- */
@@ -68,8 +64,7 @@ public abstract class Instrument {
         this.idleKeybarIndex = idleKeybarIndex;
         activeKeybarIndex = idleKeybarIndex;
         robot = null;
-        previousKeybarChange = -1 * KEYBAR_COOLDOWN;
-        millisecondsBehind = 0;
+        previousKeybarChange = -1;
     }
 
 
@@ -111,7 +106,7 @@ public abstract class Instrument {
             if (noteEvent.getType() == ShortMessage.NOTE_ON) {
 
                 // change keybars if needed
-                delay -= changeKeybars(keybarIndex, noteEvent.getTimestamp());
+                delay -= changeKeybars(keybarIndex);
 
                 // play note
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
@@ -134,25 +129,12 @@ public abstract class Instrument {
 
             // sleep until next event
             if (delay > 0) {
-
-                /*// correct delay if behind tempo
-                delay -= millisecondsBehind;
-
-                // wait until next event
-                if (delay > 0) {
-                    millisecondsBehind = 0;
-                    robot.delay(delay);
-                }
-                // try to catch up with tempo
-                else {
-                    millisecondsBehind = -1 * delay;
-                }*/
                 robot.delay(delay);
             }
         }
 
         // return to idle keybar
-        changeKeybars(idleKeybarIndex, previousKeybarChange);
+        changeKeybars(idleKeybarIndex);
     }
 
 
@@ -193,11 +175,10 @@ public abstract class Instrument {
      * Changes the active keybar to the given one.
      *
      * @param keybarIndex New active keybar.
-     * @param timestamp Moment in time event was generated (ms).
      *
      * @return Returns the amount of time (ms) robot slept.
      */
-    private int changeKeybars(int keybarIndex, int timestamp) {
+    private int changeKeybars(int keybarIndex) {
 
         int sleptAmount = 0;
 
@@ -207,27 +188,22 @@ public abstract class Instrument {
         int keybind;
         for (int j = 0; j < Math.abs(deltaKeybarIndex); j++) {
 
-            // how much time passed since the previous key bar change
-            int deltaKeybarChange = timestamp - previousKeybarChange;
-
-            // correct delta in case playback is behind in time
-            if (deltaKeybarChange <= 0) {
-                deltaKeybarChange = ROBOT_SLEEP;
-            }
-
-            // amount of time needed to wait before changing key bar
+            // amount of time needed to wait before changing key bar (ms)
             int wait = 0;
 
-            // check if it needs to wait before changing key bar
-            if (deltaKeybarChange < KEYBAR_COOLDOWN) {
+            // check if it's not the first time
+            if (previousKeybarChange > -1) {
 
-                wait = KEYBAR_COOLDOWN - deltaKeybarChange;
+                // how much time passed since the previous key bar change (ms)
+                int deltaKeybarChange = (int) ((System.nanoTime() - previousKeybarChange) / 1000000);
 
-                // lagging behind, add to global delay
-                millisecondsBehind += wait + deltaKeybarChange;
+                // check if it needs to wait before changing key bar
+                if (deltaKeybarChange < KEYBAR_COOLDOWN) {
+                    wait = KEYBAR_COOLDOWN - deltaKeybarChange;
+                }
+
+                robot.delay(wait);
             }
-
-            robot.delay(wait);
 
             // up
             if (deltaKeybarIndex > 0) {
@@ -248,8 +224,8 @@ public abstract class Instrument {
                 System.out.println("debug: KEYBAR_DOWN");
             }
 
-            // update previous key bar change timestamp
-            previousKeybarChange += deltaKeybarChange + wait;
+            // update previous key bar change time
+            previousKeybarChange = System.nanoTime();
 
             // needed for key bar change to take effect
             robot.delay(ROBOT_SLEEP);

@@ -89,7 +89,7 @@ public abstract class ShortMessageHandler {
 
         // set duration of released note
         for (NoteEvent noteEvent : midiTimeline.getTimeline()) {
-            if (noteEvent.getType() == NOTE_ON && noteEvent.getKey() == key && noteEvent.getNote().duration == 0) {
+            if (noteEvent.getType() == NOTE_ON && noteEvent.getKey() == key && noteEvent.duration == 0) {
                 noteEvent.setNoteDuration(tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo());
                 return;
             }

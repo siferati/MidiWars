@@ -14,8 +14,8 @@ public class MidiWars {
 
     /* --- DEFINES --- */
 
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\test2.mid";
-    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
+    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\New Empire - A Little Braver.mid";
+    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill.mid";
 
 
