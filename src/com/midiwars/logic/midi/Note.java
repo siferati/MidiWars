@@ -69,10 +69,4 @@ public class Note implements Comparable<Note>{
             return Integer.compare(octave, n.octave);
         }
     }
-
-
-    @Override
-    public boolean equals(Object obj) {
-        return name == name && octave == octave;
-    }
 }

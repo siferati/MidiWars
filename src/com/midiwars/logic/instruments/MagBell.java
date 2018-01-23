@@ -1,8 +1,5 @@
 package com.midiwars.logic.instruments;
 
-import com.midiwars.logic.midi.Note;
-
-import static com.midiwars.logic.midi.Note.Name.*;
 
 public class MagBell extends Instrument {
 

@@ -28,7 +28,7 @@ public abstract class Instrument {
     private final String name;
 
     /** True if the instrument can hold notes (ie note duration matters). */
-    private final boolean canHold;
+    private final boolean canHold; // TODO this isn't working
 
     /** Each line represents a key bar (in-game skill bar - usually an octave) and its slots. */
     private final int[][] keybars;
@@ -127,9 +127,26 @@ public abstract class Instrument {
                 robot.keyRelease(keybind);
             }
 
-            // sleep until next event
+            // look into the future (one event) and preemptively change key bars if needed
             if (delay > 0) {
-                robot.delay(delay);
+
+                // check if this isn't the last iteration
+                if (i < timeline.size() - 1) {
+
+                    // get next note event
+                    NoteEvent nextNoteEvent = timeline.get(i+1);
+
+                    // change keybars if needed
+                    if (nextNoteEvent.getType() == ShortMessage.NOTE_ON) {
+                        int nextKeybarIndex = getKeybarIndex(nextNoteEvent.getKey());
+                        delay -= changeKeybars(nextKeybarIndex);
+                    }
+
+                    // sleep until next event
+                    if (delay > 0) {
+                        robot.delay(delay);
+                    }
+                }
             }
         }
 
