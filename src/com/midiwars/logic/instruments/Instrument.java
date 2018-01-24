@@ -28,7 +28,7 @@ public abstract class Instrument {
     private final String name;
 
     /** True if the instrument can hold notes (ie note duration matters). */
-    private final boolean canHold; // TODO this isn't working
+    private final boolean canHold;
 
     /** Each line represents a key bar (in-game skill bar - usually an octave) and its slots. */
     private final int[][] keybars;
@@ -42,7 +42,7 @@ public abstract class Instrument {
     /** Robot used to simulate system inputs. */
     private Robot robot;
 
-    /** System time of the previous key bar change (nanosec). */
+    /** System time of the previous key bar change (ms). */
     private long previousKeybarChange;
 
 
@@ -84,7 +84,6 @@ public abstract class Instrument {
         for (int i = 0; i < timeline.size(); i++) {
 
             NoteEvent noteEvent = timeline.get(i);
-
             int keybarIndex = getKeybarIndex(noteEvent.getKey());
 
             // ignore if note can't be played
@@ -112,7 +111,7 @@ public abstract class Instrument {
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
                 robot.keyPress(keybind);
 
-                System.out.println("debug: Played: " + noteEvent);
+                //System.out.println("debug: Played: " + noteEvent);
 
                 // if can't hold notes, release key
                 if (!canHold) {
@@ -122,6 +121,7 @@ public abstract class Instrument {
 
             // case NOTE_OFF
             else if (canHold) {
+                System.out.println("debug: Releasing: " + noteEvent);
                 // assuming note positions are the same between keybars
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
                 robot.keyRelease(keybind);
@@ -139,7 +139,10 @@ public abstract class Instrument {
                     // change keybars if needed
                     if (nextNoteEvent.getType() == ShortMessage.NOTE_ON) {
                         int nextKeybarIndex = getKeybarIndex(nextNoteEvent.getKey());
-                        delay -= changeKeybars(nextKeybarIndex);
+                        // make sure key to play is within instrument's range
+                        if (nextKeybarIndex >= 0) {
+                            delay -= changeKeybars(nextKeybarIndex);
+                        }
                     }
 
                     // sleep until next event
@@ -212,7 +215,7 @@ public abstract class Instrument {
             if (previousKeybarChange > -1) {
 
                 // how much time passed since the previous key bar change (ms)
-                int deltaKeybarChange = (int) ((System.nanoTime() - previousKeybarChange) / 1000000);
+                int deltaKeybarChange = (int) (System.currentTimeMillis() - previousKeybarChange);
 
                 // check if it needs to wait before changing key bar
                 if (deltaKeybarChange < KEYBAR_COOLDOWN) {
@@ -222,27 +225,21 @@ public abstract class Instrument {
                 robot.delay(wait);
             }
 
-            // up
+            // decide key bar change direction
             if (deltaKeybarIndex > 0) {
-
                 keybind = Keymap.OCTAVEUP_KEYBIND;
-                robot.keyPress(keybind);
-                robot.keyRelease(keybind);
-
                 System.out.println("debug: KEYBAR_UP");
-            }
-            // down
-            else {
-
+            } else {
                 keybind = Keymap.OCTAVEDOWN_KEYBIND;
-                robot.keyPress(keybind);
-                robot.keyRelease(keybind);
-
                 System.out.println("debug: KEYBAR_DOWN");
             }
 
+            // change key bar
+            robot.keyPress(keybind);
+            robot.keyRelease(keybind);
+
             // update previous key bar change time
-            previousKeybarChange = System.nanoTime();
+            previousKeybarChange = System.currentTimeMillis();
 
             // needed for key bar change to take effect
             robot.delay(ROBOT_SLEEP);
@@ -269,12 +266,15 @@ public abstract class Instrument {
      */
     private int getKeybarIndex(int key) {
 
+        // check active key bar first,
+        // in order to avoid unnecessary changes
         for (int k : keybars[activeKeybarIndex]) {
             if (k == key) {
                 return activeKeybarIndex;
             }
         }
 
+        // other key bars
         for (int i = 0; i < keybars.length; i++) {
             // this was already tested above
             if (i == activeKeybarIndex) {
@@ -294,20 +294,37 @@ public abstract class Instrument {
 
 
     /**
-     * Returns the index of given key (note) in the active keybar.
+     * Returns the index of given key (note) in a keybar.
      *
      * @param key Key to assess.
      *
-     * @return Key index. -1 if key doesn't belong to active key bar.
+     * @return Key index. -1 if note can't be played.
      */
     private int getKeyIndex(int key) {
 
+        // check active key bar first,
+        // since its the most common occurrence
         for (int i = 0; i < keybars[activeKeybarIndex].length; i++) {
             if (key == keybars[activeKeybarIndex][i]) {
                 return i;
             }
         }
 
+        // other key bars
+        for (int i = 0; i < keybars.length; i++) {
+            // this was already tested above
+            if (i == activeKeybarIndex) {
+                continue;
+            }
+
+            for (int j = 0; j < keybars[i].length; j++) {
+                if (keybars[i][j] == key) {
+                    return j;
+                }
+            }
+        }
+
+        // can't play this note
         return -1;
     }
 }
