@@ -45,6 +45,9 @@ public abstract class Instrument {
     /** System time of the previous key bar change (ms). */
     private long previousKeybarChange;
 
+    /** The keyboard key that is currently being held down. */
+    private int heldKeybind;
+
 
     /* --- METHODS --- */
 
@@ -65,6 +68,7 @@ public abstract class Instrument {
         activeKeybarIndex = idleKeybarIndex;
         robot = null;
         previousKeybarChange = -1;
+        heldKeybind = -1;
     }
 
 
@@ -104,18 +108,23 @@ public abstract class Instrument {
             // case NOTE_ON
             if (noteEvent.getType() == ShortMessage.NOTE_ON) {
 
+                if (heldKeybind > -1) {
+                    robot.keyRelease(heldKeybind);
+                }
+
                 // change keybars if needed
                 delay -= changeKeybars(keybarIndex);
 
                 // play note
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
                 robot.keyPress(keybind);
+                heldKeybind = keybind;
 
-                //System.out.println("debug: Played: " + noteEvent);
+                System.out.println("debug: Played: " + noteEvent);
 
                 // if can't hold notes, release key
                 if (!canHold) {
-                    robot.keyRelease(keybind);
+                    //robot.keyRelease(keybind);
                 }
             }
 
@@ -124,7 +133,10 @@ public abstract class Instrument {
                 System.out.println("debug: Releasing: " + noteEvent);
                 // assuming note positions are the same between keybars
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
-                robot.keyRelease(keybind);
+                if (keybind == heldKeybind) {
+                    robot.keyRelease(keybind);
+                    heldKeybind = -1;
+                }
             }
 
             // look into the future (one event) and preemptively change key bars if needed

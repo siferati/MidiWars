@@ -9,7 +9,7 @@ public class MagBell extends Instrument {
     public final static String NAME = "Magnanimous Choir Bell";
 
     /** {@link Instrument#canHold Can Hold}. */
-    public final static boolean CAN_HOLD = false;
+    public final static boolean CAN_HOLD = true;
 
     /** {@link Instrument#keybars Key bars}. */
     public final static int[][] KEYBARS = {
