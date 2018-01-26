@@ -19,7 +19,7 @@ public abstract class Instrument {
     public static int ROBOT_SLEEP = 50;
 
     /** Minimum amount of time needed in-between key bar changes (ms). */
-    public static int KEYBAR_COOLDOWN = 150;
+    public static int KEYBAR_COOLDOWN = 200;
 
 
     /* --- ATTRIBUTES --- */
@@ -117,6 +117,40 @@ public abstract class Instrument {
                 heldKeybind = keybind;
 
                 System.out.println("debug: Played: " + noteEvent);
+
+                // TODO since changing a key bar releases previously held key, this won't work for holding notes (ie flute)
+                // if there's time, look into the future and preemptively change key bars if needed
+                if (delay > 0) {
+
+                    // true when next playable NOTE_ON event is found
+                    boolean found = false;
+
+                    int j = i;
+                    while (j < timeline.size() - 1 && !found) {
+
+                        // get next note event
+                        NoteEvent nextNoteEvent = timeline.get(j+1);
+
+                        // only interested in NOTE_ON events
+                        if (nextNoteEvent.getType() == ShortMessage.NOTE_ON) {
+
+                            int nextKeybarIndex = getKeybarIndex(nextNoteEvent.getKey());
+
+                            // make sure key to play is within instrument's range
+                            if (nextKeybarIndex >= 0) {
+
+                                // change keybars if needed
+                                delay -= changeKeybars(nextKeybarIndex);
+
+                                // break loop
+                                found = true;
+                            }
+                        }
+
+                        // prepare next ite
+                        j++;
+                    }
+                }
             }
 
             // case NOTE_OFF
@@ -129,29 +163,9 @@ public abstract class Instrument {
                 }
             }
 
-            // look into the future (one event) and preemptively change key bars if needed
+            // sleep until next event
             if (delay > 0) {
-
-                // check if this isn't the last iteration
-                if (i < timeline.size() - 1) {
-
-                    // get next note event
-                    NoteEvent nextNoteEvent = timeline.get(i+1);
-
-                    // change keybars if needed
-                    if (nextNoteEvent.getType() == ShortMessage.NOTE_ON) {
-                        int nextKeybarIndex = getKeybarIndex(nextNoteEvent.getKey());
-                        // make sure key to play is within instrument's range
-                        if (nextKeybarIndex >= 0) {
-                            delay -= changeKeybars(nextKeybarIndex);
-                        }
-                    }
-
-                    // sleep until next event
-                    if (delay > 0) {
-                        robot.delay(delay);
-                    }
-                }
+                robot.delay(delay);
             }
         }
 
