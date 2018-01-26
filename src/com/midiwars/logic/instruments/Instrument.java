@@ -27,9 +27,6 @@ public abstract class Instrument {
     /** Note of the instrument. */
     private final String name;
 
-    /** True if the instrument can hold notes (ie note duration matters). */
-    private final boolean canHold;
-
     /** Each line represents a key bar (in-game skill bar - usually an octave) and its slots. */
     private final int[][] keybars;
 
@@ -55,14 +52,12 @@ public abstract class Instrument {
      * Constructor.
      *
      * @param name Note of the instrument.
-     * @param canHold If the instrument can hold notes.
      * @param keybars Each line represents a skill bar (usually an octave).
      * @param idleKeybarIndex The active key bar before and after the midi timeline is played.
      */
-    public Instrument(String name, boolean canHold, int [][] keybars, int idleKeybarIndex) {
+    public Instrument(String name, int [][] keybars, int idleKeybarIndex) {
 
         this.name = name;
-        this.canHold = canHold;
         this.keybars = keybars;
         this.idleKeybarIndex = idleKeybarIndex;
         activeKeybarIndex = idleKeybarIndex;
@@ -108,6 +103,7 @@ public abstract class Instrument {
             // case NOTE_ON
             if (noteEvent.getType() == ShortMessage.NOTE_ON) {
 
+                // if there's a key being held down
                 if (heldKeybind > -1) {
                     robot.keyRelease(heldKeybind);
                 }
@@ -121,17 +117,11 @@ public abstract class Instrument {
                 heldKeybind = keybind;
 
                 System.out.println("debug: Played: " + noteEvent);
-
-                // if can't hold notes, release key
-                if (!canHold) {
-                    //robot.keyRelease(keybind);
-                }
             }
 
             // case NOTE_OFF
-            else if (canHold) {
+            else {
                 System.out.println("debug: Releasing: " + noteEvent);
-                // assuming note positions are the same between keybars
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
                 if (keybind == heldKeybind) {
                     robot.keyRelease(keybind);
@@ -246,15 +236,24 @@ public abstract class Instrument {
                 System.out.println("debug: KEYBAR_DOWN");
             }
 
+            // if there's a key being held down
+            if (heldKeybind > -1) {
+                robot.keyRelease(heldKeybind);
+                // key bar changes immediately release key
+                heldKeybind = -1;
+            }
+
             // change key bar
             robot.keyPress(keybind);
-            robot.keyRelease(keybind);
 
             // update previous key bar change time
             previousKeybarChange = System.currentTimeMillis();
 
             // needed for key bar change to take effect
             robot.delay(ROBOT_SLEEP);
+
+            // called after delay() to provide small visual feedback in-game
+            robot.keyRelease(keybind);
 
             // update delay
             sleptAmount += ROBOT_SLEEP + wait;
