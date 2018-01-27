@@ -122,4 +122,14 @@ public class NoteEvent implements Comparable<NoteEvent> {
     public int getType() {
         return type;
     }
+
+
+    /**
+     * Returns {@link #duration}.
+     *
+     * @return {@link #duration Duration}.
+     */
+    public int getDuration() {
+        return duration;
+    }
 }

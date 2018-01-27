@@ -17,10 +17,11 @@ public class MidiWars {
 
     /* --- DEFINES --- */
 
+    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\test.mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Shigatsu wa Kimi no Uso.mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\HesaPirate.mid";
-    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\New Empire - A Little Braver.mid";
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
+    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\New Empire - A Little Braver (mid).mid";
+    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill (c major).mid";
 
 
@@ -40,6 +41,12 @@ public class MidiWars {
             MidiTimeline midiTimeline = new MidiTimeline(FILEPATH);
 
             MagBell magBell = new MagBell();
+
+            if (magBell.isTooFast(midiTimeline)) {
+                System.out.println("debug: Key bar changes: NOT OK");
+            } else {
+                System.out.println("debug: Key bar changes: OK");
+            }
 
             if (!magBell.canPlay(midiTimeline)) {
                 System.out.println("This midi file contains notes that this instrument can not play, therefore they will be skipped during playback");

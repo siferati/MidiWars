@@ -4,9 +4,10 @@ import com.midiwars.logic.Keymap;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.logic.midi.NoteEvent;
 
-import javax.sound.midi.ShortMessage;
 import java.awt.*;
 import java.util.ArrayList;
+
+import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
  * Represents a musical instrument.
@@ -83,7 +84,12 @@ public abstract class Instrument {
 
         ArrayList<NoteEvent> timeline = midiTimeline.getTimeline();
 
-        robot = new Robot();
+        // reset initial states before playing
+        activeKeybarIndex = idleKeybarIndex;
+        previousKeybarChange = -1;
+        if (robot == null) {
+            robot = new Robot();
+        }
 
         for (int i = 0; i < timeline.size(); i++) {
 
@@ -106,7 +112,7 @@ public abstract class Instrument {
             int keybind;
 
             // case NOTE_ON
-            if (noteEvent.getType() == ShortMessage.NOTE_ON) {
+            if (noteEvent.getType() == NOTE_ON) {
 
                 // if there's a key being held down
                 if (heldKeybind > -1) {
@@ -147,6 +153,13 @@ public abstract class Instrument {
 
             // sleep until next event
             if (delay > 0) {
+
+                // robot.delay() doesn't handle higher values
+                // and I don't want to Thread.sleep()
+                if (delay > 60000) {
+                    delay = 60000;
+                }
+
                 robot.delay(delay);
             }
         }
@@ -172,7 +185,7 @@ public abstract class Instrument {
             NoteEvent nextNoteEvent = timeline.get(j+1);
 
             // only interested in NOTE_ON events
-            if (nextNoteEvent.getType() == ShortMessage.NOTE_ON) {
+            if (nextNoteEvent.getType() == NOTE_ON) {
 
                 int nextKeybarIndex = getKeybarIndex(nextNoteEvent.getKey());
 
@@ -186,6 +199,106 @@ public abstract class Instrument {
         }
 
         return 0;
+    }
+
+
+    /**
+     * Checks if the given midi timeline can be properly played by this instrument
+     * (ie key bar changes aren't too fast).
+     *
+     * @param midiTimeline Timeline to assess.
+     *
+     * @return True if instrument can play it, False otherwise.
+     */
+    public boolean isTooFast(MidiTimeline midiTimeline) {
+
+        ArrayList<NoteEvent> timeline = midiTimeline.getTimeline();
+
+        // reset
+        previousKeybarChange = -1;
+        activeKeybarIndex = idleKeybarIndex;
+        NoteEvent previousNoteOnEvent = null;
+
+        for (NoteEvent noteEvent : timeline) {
+
+            int keybarIndex = getKeybarIndex(noteEvent.getKey());
+
+            // ignore if note can't be played
+            if (keybarIndex < 0 || noteEvent.getType() != NOTE_ON) {
+                continue;
+            }
+
+            // how many key bars are necessary to change
+            int deltaKeybarIndex = keybarIndex - activeKeybarIndex;
+
+            // if there's a need to change key bar
+            if (deltaKeybarIndex != 0) {
+
+                // if it's not the first time
+                if (previousKeybarChange > -1) {
+
+                    // how much time passed since the previous key bar change (ms)
+                    int deltaKeybarChange = (int) (noteEvent.getTimestamp() - previousKeybarChange);
+
+                    // ---------------------------------------------------------------
+                    // these IFs could be under a single statement using OR operator,
+                    // but it's already hard enough to read as it is, so...
+                    // ---------------------------------------------------------------
+
+                    boolean exit = false;
+
+                    // change is too fast, key bar change cooldown hasn't passed yet
+                    if (deltaKeybarChange < Math.abs(deltaKeybarIndex) * KEYBAR_COOLDOWN) {
+                        exit = true;
+                    }
+
+                    // change is too fast, robot.delay() after octave change will affect note playtime
+                    else if (previousNoteOnEvent != null && noteEvent.getTimestamp() != previousNoteOnEvent.getTimestamp()) {
+
+                        // instrument can't hold notes
+                        if ((!canHold &&
+                                (noteEvent.getTimestamp() < previousNoteOnEvent.getTimestamp() + ROBOT_SLEEP))) {
+                            exit = true;
+                        }
+
+                        // instrument can hold notes
+                        else if ((canHold &&
+                                (noteEvent.getTimestamp() < previousNoteOnEvent.getTimestamp() + previousNoteOnEvent.getDuration() + ROBOT_SLEEP))) {
+                            exit = true;
+                        }
+                    }
+
+                    // can't properly play this midi timeline
+                    if (exit) {
+
+                        // reset
+                        previousKeybarChange = -1;
+                        activeKeybarIndex = idleKeybarIndex;
+
+                        return true;
+                    }
+                }
+
+                if (!canHold && previousNoteOnEvent != null) {
+                    previousKeybarChange = previousNoteOnEvent.getTimestamp();
+                }
+                if (canHold && previousNoteOnEvent != null) {
+                    previousKeybarChange = previousNoteOnEvent.getTimestamp() + previousNoteOnEvent.getDuration();
+                }
+
+                activeKeybarIndex = keybarIndex;
+            }
+
+            previousNoteOnEvent = noteEvent;
+        }
+
+        // reset
+        previousKeybarChange = -1;
+        activeKeybarIndex = idleKeybarIndex;
+
+        // can play this midi timeline
+        return false;
+
     }
 
 

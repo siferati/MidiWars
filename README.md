@@ -9,9 +9,15 @@
 * ~~Simulate keyboard inputs~~
 
 ### Main
-* Handle Tempo changes in multiple tracks
-* Handle time signatures different from x/4
-* Include all instruments
+* Warnings
+  * ~~Notes outside of instrument's range~~
+  * ~~Tempo too fast~~
+  * Pauses too long
+* Tempo changes in multiple tracks
+* Time signatures different from x/4
+* All message types
+* SMPTE
+* Instruments
   * Flute
   * ~~Magnanimous Choir Bell~~
   * Marriner's Horn
@@ -19,6 +25,7 @@
   * Musical Harp
   * Musical Lute
   * Unbreakable Choir Bell
+* CLI
+* In-game chat commands
 * GUI (overlay)
 * GUI (preferences)
-* Handle SMPTE
