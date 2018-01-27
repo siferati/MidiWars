@@ -27,6 +27,9 @@ public abstract class Instrument {
     /** Note of the instrument. */
     private final String name;
 
+    /** True if the instrument can hold notes (ie note duration matters). */
+    private final boolean canHold;
+
     /** Each line represents a key bar (in-game skill bar - usually an octave) and its slots. */
     private final int[][] keybars;
 
@@ -52,12 +55,14 @@ public abstract class Instrument {
      * Constructor.
      *
      * @param name Note of the instrument.
+     * @param canHold If the instrument can hold notes.
      * @param keybars Each line represents a skill bar (usually an octave).
      * @param idleKeybarIndex The active key bar before and after the midi timeline is played.
      */
-    public Instrument(String name, int [][] keybars, int idleKeybarIndex) {
+    public Instrument(String name, boolean canHold, int [][] keybars, int idleKeybarIndex) {
 
         this.name = name;
+        this.canHold = canHold;
         this.keybars = keybars;
         this.idleKeybarIndex = idleKeybarIndex;
         activeKeybarIndex = idleKeybarIndex;
@@ -118,38 +123,9 @@ public abstract class Instrument {
 
                 System.out.println("debug: Played: " + noteEvent);
 
-                // TODO since changing a key bar releases previously held key, this won't work for holding notes (ie flute)
                 // if there's time, look into the future and preemptively change key bars if needed
-                if (delay > 0) {
-
-                    // true when next playable NOTE_ON event is found
-                    boolean found = false;
-
-                    int j = i;
-                    while (j < timeline.size() - 1 && !found) {
-
-                        // get next note event
-                        NoteEvent nextNoteEvent = timeline.get(j+1);
-
-                        // only interested in NOTE_ON events
-                        if (nextNoteEvent.getType() == ShortMessage.NOTE_ON) {
-
-                            int nextKeybarIndex = getKeybarIndex(nextNoteEvent.getKey());
-
-                            // make sure key to play is within instrument's range
-                            if (nextKeybarIndex >= 0) {
-
-                                // change keybars if needed
-                                delay -= changeKeybars(nextKeybarIndex);
-
-                                // break loop
-                                found = true;
-                            }
-                        }
-
-                        // prepare next ite
-                        j++;
-                    }
+                if (delay > 0 && !canHold) {
+                    delay -= preemptivelyChangeKeybars(i, timeline);
                 }
             }
 
@@ -160,6 +136,12 @@ public abstract class Instrument {
                 if (keybind == heldKeybind) {
                     robot.keyRelease(keybind);
                     heldKeybind = -1;
+
+                    // canHold instruments can only preemptively change key bars if there's no held key atm
+                    // (ie if a key was just released)
+                    if (delay > 0 && canHold) {
+                        delay -= preemptivelyChangeKeybars(i, timeline);
+                    }
                 }
             }
 
@@ -171,6 +153,39 @@ public abstract class Instrument {
 
         // return to idle keybar
         changeKeybars(idleKeybarIndex);
+    }
+
+
+    /**
+     * Looks into the future (starting from given position) to preemptively change keybars if needed.
+     *
+     * @param i Index of starting position in the timeline.
+     * @param timeline Midi Timeline.
+     *
+     * @return Returns the amount of time (ms) robot slept.
+     */
+    public int preemptivelyChangeKeybars(int i, ArrayList<NoteEvent> timeline) {
+
+        for (int j = i; j < timeline.size() - 1; j++) {
+
+            // get next note event
+            NoteEvent nextNoteEvent = timeline.get(j+1);
+
+            // only interested in NOTE_ON events
+            if (nextNoteEvent.getType() == ShortMessage.NOTE_ON) {
+
+                int nextKeybarIndex = getKeybarIndex(nextNoteEvent.getKey());
+
+                // make sure key to play is within instrument's range
+                if (nextKeybarIndex >= 0) {
+
+                    // change keybars if needed
+                    return changeKeybars(nextKeybarIndex);
+                }
+            }
+        }
+
+        return 0;
     }
 
 
