@@ -23,25 +23,29 @@ public class MetaMessageHandler {
      *
      * @param midiTimeline midi timeline.
      * @param metaMessage Message received.
+     * @param tick MidiEvent time-stamp (ticks).
      */
-    public static void metaMessageHandler(MidiTimeline midiTimeline, MetaMessage metaMessage) {
+    public static void metaMessageHandler(MidiTimeline midiTimeline, MetaMessage metaMessage, long tick) {
 
         switch (metaMessage.getType()) {
 
             case END_OF_TRACk: {
 
-                System.out.println("debug: END OF TRACK");
+                System.out.println("debug: END_OF_TRACK");
                 break;
             }
 
             case SET_TEMPO: {
 
-                setTempo(midiTimeline, metaMessage);
+                setTempo(midiTimeline, metaMessage, tick);
                 break;
             }
 
-            default:
+            default: {
+
+                System.out.println("debug: Unknown Meta Message type: 0x" + Integer.toHexString(metaMessage.getType()).toUpperCase());
                 break;
+            }
         }
     }
 
@@ -51,10 +55,11 @@ public class MetaMessageHandler {
      *
      * @param midiTimeline midi timeline.
      * @param metaMessage Message received.
+     * @param tick MidiEvent time-stamp (ticks).
      *
-     * @see #metaMessageHandler(MidiTimeline, MetaMessage)
+     * @see #metaMessageHandler(MidiTimeline, MetaMessage, long)
      */
-    private static void setTempo(MidiTimeline midiTimeline, MetaMessage metaMessage) {
+    private static void setTempo(MidiTimeline midiTimeline, MetaMessage metaMessage, long tick) {
 
         // read message data
         byte[] data = metaMessage.getData();
@@ -63,6 +68,8 @@ public class MetaMessageHandler {
         int mspq = (data[0] & 0xff) << 16 | (data[1] & 0xff) << 8 | (data[2] & 0xff);
 
         // 1 min = 60 s = 60 000 000 ms
-        midiTimeline.setTempo((60 * 1000000) / mspq);
+        midiTimeline.addTempo(tick, (60.0 * 1000000) / mspq);
+
+        System.out.println("debug: SET_TEMPO: " + midiTimeline.getTempo(tick) + " BPM.");
     }
 }

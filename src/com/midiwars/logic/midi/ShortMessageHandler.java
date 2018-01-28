@@ -35,7 +35,7 @@ public abstract class ShortMessageHandler {
 
             default: {
 
-                System.out.println("debug: Command:" + shortMessage.getCommand());
+                System.out.println("debug: Unknown Short Message command: 0x" + Integer.toHexString(shortMessage.getCommand()).toUpperCase());
                 break;
             }
         }
@@ -66,7 +66,7 @@ public abstract class ShortMessageHandler {
         int key = shortMessage.getData1();
 
         // add note to timeline
-        midiTimeline.getTimeline().add(new NoteEvent(NOTE_ON, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo()));
+        midiTimeline.getTimeline().add(new NoteEvent(NOTE_ON, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo(tick)));
     }
 
 
@@ -85,12 +85,12 @@ public abstract class ShortMessageHandler {
         int key = shortMessage.getData1();
 
         // add note release event to timeline
-        midiTimeline.getTimeline().add(new NoteEvent(NOTE_OFF, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo()));
+        midiTimeline.getTimeline().add(new NoteEvent(NOTE_OFF, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo(tick)));
 
         // set duration of released note
         for (NoteEvent noteEvent : midiTimeline.getTimeline()) {
             if (noteEvent.getType() == NOTE_ON && noteEvent.getKey() == key && noteEvent.duration == 0) {
-                noteEvent.setNoteDuration(tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo());
+                noteEvent.setNoteDuration(tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo(tick));
                 return;
             }
         }

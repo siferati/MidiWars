@@ -3,9 +3,7 @@ package com.midiwars.logic.midi;
 import javax.sound.midi.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 import static com.midiwars.logic.midi.MetaMessageHandler.metaMessageHandler;
 import static com.midiwars.logic.midi.ShortMessageHandler.shortMessageHandler;
@@ -27,8 +25,10 @@ public class MidiTimeline {
     /** Notes played. */
     private ArrayList<NoteEvent> timeline;
 
-    /** Current tempo of the piece (bpm) (changes upon receiving SET_TEMPO). */
-    private int tempo;
+    /** Maps tempo (bpm) changes (SET_TEMPO midi message) to the instant (tick) it happens. */
+    private Map<Long, Double> tempo;
+
+
 
 
     /* --- METHODS --- */
@@ -45,7 +45,7 @@ public class MidiTimeline {
 
         sequence = null;
         timeline = new ArrayList<>();
-        tempo = 0;
+        tempo = new HashMap<>();
 
         // read the midi file and construct its timeline
         constructTimeline(filepath);
@@ -104,7 +104,7 @@ public class MidiTimeline {
 
                 // case MetaMessage
                 else if (message instanceof MetaMessage) {
-                   metaMessageHandler(this, (MetaMessage) message);
+                   metaMessageHandler(this, (MetaMessage) message, tick);
                 }
 
                 // case SysexMessage
@@ -141,21 +141,34 @@ public class MidiTimeline {
 
 
     /**
-     * Returns current {@link #tempo}.
+     * Returns tempo at current tick.
      *
      * @return {@link #tempo Tempo}.
      */
-    public int getTempo() {
-        return tempo;
+    public double getTempo(long tick) {
+
+        // key of return value
+        long latestTempo = 0;
+
+        for (Map.Entry<Long, Double> entry : tempo.entrySet())
+        {
+            // find current tempo
+            if (entry.getKey() <= tick && entry.getKey() >= latestTempo) {
+                latestTempo = entry.getKey();
+            }
+        }
+
+        return tempo.get(latestTempo);
     }
 
 
     /**
-     * Sets current {@link #tempo}.
+     * Adds an entry to the tempo map.
      *
      * @param tempo {@link #tempo Tempo}.
      */
-    public void setTempo(int tempo) {
-        this.tempo = tempo;
+    public void addTempo(long tick, double tempo) {
+
+        this.tempo.put(tick, tempo);
     }
 }

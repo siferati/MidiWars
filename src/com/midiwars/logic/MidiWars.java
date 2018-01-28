@@ -3,8 +3,11 @@ package com.midiwars.logic;
 import com.midiwars.logic.instruments.Instrument.Warning;
 import com.midiwars.logic.instruments.MagBell;
 import com.midiwars.logic.midi.MidiTimeline;
+import com.midiwars.logic.midi.NoteEvent;
 
 import java.util.ArrayList;
+
+import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
  * Represents the application itself
@@ -13,10 +16,10 @@ public class MidiWars {
 
     /* --- DEFINES --- */
 
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\test.mid";
+    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\test.mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Shigatsu wa Kimi no Uso.mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\HesaPirate.mid";
-    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\New Empire - A Little Braver (mid).mid";
+    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\New Empire - A Little Braver (mid).mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill (c major).mid";
 
@@ -59,9 +62,13 @@ public class MidiWars {
                 }
             }
 
-            Thread.sleep(5000);
+            for (NoteEvent noteEvent: midiTimeline.getTimeline()) {
+                if (noteEvent.getType() == NOTE_ON)
+                System.out.println("debug: " + noteEvent);
+            }
 
-            magBell.play(midiTimeline);
+            //Thread.sleep(5000);
+            //magBell.play(midiTimeline);
         }
         catch (Exception e) {
             e.printStackTrace();

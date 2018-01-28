@@ -35,7 +35,7 @@ public class NoteEvent implements Comparable<NoteEvent> {
      * @param resolution Number of ticks per quarter note (PPQ), or per SMPTE frame (SMPTE).
      * @param tempo Current tempo (BPM).
      */
-    public NoteEvent(int type, int key, long tick, int resolution, int tempo) {
+    public NoteEvent(int type, int key, long tick, int resolution, double tempo) {
 
         this.type = type;
         this.key = key;
@@ -54,7 +54,12 @@ public class NoteEvent implements Comparable<NoteEvent> {
      *
      * @return Seconds.
      */
-    private int ticksToMilliseconds(long tick, int resolution, int tempo) {
+    private int ticksToMilliseconds(long tick, int resolution, double tempo) {
+
+        // TODO constructor e metodo: em vez de passar tick, passar deltaTick = tick - previousTick (o resto fica tudo igual)
+        if (tempo == 60) {
+            System.out.println("debug: ola");
+        }
 
         // TODO SMPTE
         double ticksPerSecond = resolution * (tempo / 60.0);
@@ -69,7 +74,7 @@ public class NoteEvent implements Comparable<NoteEvent> {
      * @param resolution Number of ticks per quarter note (PPQ), or per SMPTE frame (SMPTE).
      * @param tempo Current tempo (BPM).
      */
-    public void setNoteDuration(long tick, int resolution, int tempo) {
+    public void setNoteDuration(long tick, int resolution, double tempo) {
         duration = ticksToMilliseconds(tick, resolution, tempo) - timestamp;
     }
 
