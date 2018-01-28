@@ -12,6 +12,7 @@
 * Warnings
   * ~~Notes outside of instrument's range~~
   * ~~Tempo too fast~~
+  * Notes too long
   * Pauses too long
 * Tempo changes in multiple tracks
 * Time signatures different from x/4
@@ -24,7 +25,6 @@
   * Musical Bass Guitar
   * Musical Harp
   * Musical Lute
-  * Unbreakable Choir Bell
 * CLI
 * In-game chat commands
 * GUI (overlay)

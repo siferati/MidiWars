@@ -7,6 +7,7 @@ import com.midiwars.logic.midi.NoteEvent;
 import java.awt.*;
 import java.util.ArrayList;
 
+import static com.midiwars.logic.instruments.Instrument.Warning.*;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
@@ -15,6 +16,22 @@ import static javax.sound.midi.ShortMessage.NOTE_ON;
 public abstract class Instrument {
 
     /* --- DEFINES --- */
+
+    /** Possible warnings when trying to play a midi timeline. */
+    public enum Warning {
+
+        /** Some notes can't be played by this instrument. */
+        NOT_IN_RANGE,
+
+        /** Tempo is too fast, playback will probably be hindered. */
+        TEMPO_TOO_FAST,
+
+        /** Some notes last for too long, so they'll probably be played twice. */
+        NOTES_TOO_LONG,
+
+        /** Some pauses last for too long, probably an error in the midi file. */
+        PAUSES_TOO_LONG
+    }
 
     /** Amount of time robot sleeps after a key bar change (ms). */
     public static int ROBOT_SLEEP = 50;
@@ -204,15 +221,35 @@ public abstract class Instrument {
 
     /**
      * Checks if the given midi timeline can be properly played by this instrument
-     * (ie key bar changes aren't too fast).
+     * (ie no warnings pop up).
      *
      * @param midiTimeline Timeline to assess.
      *
-     * @return True if instrument can play it, False otherwise.
+     * @return List of warnings related to the given midi timeline.
      */
-    public boolean isTooFast(MidiTimeline midiTimeline) {
+    public ArrayList<Warning> canPlay(MidiTimeline midiTimeline) {
+
+        ArrayList<Warning> warnings = new ArrayList<>();
 
         ArrayList<NoteEvent> timeline = midiTimeline.getTimeline();
+
+        if (!isInRange(timeline)) warnings.add(NOT_IN_RANGE);
+
+        if (isTooFast(timeline)) warnings.add(TEMPO_TOO_FAST);
+
+        return warnings;
+    }
+
+
+    /**
+     * Checks if the given timeline key bar changes aren't too fast,
+     * thus hindering playback.
+     *
+     * @param timeline Timeline to assess.
+     *
+     * @return True if timeline is too fast for playback, False if it's ok.
+     */
+    public boolean isTooFast(ArrayList<NoteEvent> timeline) {
 
         // reset
         previousKeybarChange = -1;
@@ -303,16 +340,15 @@ public abstract class Instrument {
 
 
     /**
-     * Checks if the given midi timeline can be played by this instrument
-     * (ie if every note is contained in this instrument's key bars).
+     * Checks if every note in the given timeline can be played by this instrument.
      *
-     * @param midiTimeline Timeline to assess.
+     * @param timeline Timeline to assess.
      *
-     * @return True if instrument can play it, False otherwise.
+     * @return True if every note is in range, False otherwise.
      */
-    public boolean canPlay(MidiTimeline midiTimeline) {
+    public boolean isInRange(ArrayList<NoteEvent> timeline) {
 
-        for (NoteEvent noteEvent : midiTimeline.getTimeline()) {
+        for (NoteEvent noteEvent : timeline) {
 
             boolean found = false;
 
