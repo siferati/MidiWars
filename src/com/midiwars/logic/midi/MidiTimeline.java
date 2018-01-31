@@ -7,6 +7,8 @@ import java.util.*;
 
 import static com.midiwars.logic.midi.MetaMessageHandler.metaMessageHandler;
 import static com.midiwars.logic.midi.ShortMessageHandler.shortMessageHandler;
+import static javax.sound.midi.ShortMessage.NOTE_OFF;
+import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
  * Represents the timeline of a given midi file.
@@ -26,9 +28,7 @@ public class MidiTimeline {
     private ArrayList<NoteEvent> timeline;
 
     /** Maps tempo (bpm) changes (SET_TEMPO midi message) to the instant (tick) it happens. */
-    private Map<Long, Double> tempo;
-
-
+    private TreeMap<Long, Double> tempo;
 
 
     /* --- METHODS --- */
@@ -45,7 +45,7 @@ public class MidiTimeline {
 
         sequence = null;
         timeline = new ArrayList<>();
-        tempo = new HashMap<>();
+        tempo = new TreeMap<>();
 
         // read the midi file and construct its timeline
         constructTimeline(filepath);
@@ -121,12 +121,104 @@ public class MidiTimeline {
 
 
     /**
-     * Returns {@link #sequence}.
+     * Adds an entry to the tempo map.
      *
-     * @return {@link #sequence Sequence}.
+     * @param tempo {@link #tempo Tempo}.
      */
-    public Sequence getSequence() {
-        return sequence;
+    public void addTempo(long tick, double tempo) {
+        this.tempo.put(tick, tempo);
+    }
+
+
+    /**
+     * Adds note event to timeline.
+     *
+     * @param type NOTE_ON (0x90) or NOTE_OFF (0x80).
+     * @param key Key number [0-127].
+     * @param tick MidiEvent time-stamp (ticks).
+     */
+    public void addNoteEvent(int type, int key, long tick) {
+
+        // add note event
+        timeline.add(new NoteEvent(
+                type,
+                key,
+                ticksToMilliseconds(tick)
+        ));
+
+        // key released
+        if (type == NOTE_OFF) {
+
+            // search respective NOTE_ON event
+            for (int i = timeline.size() - 1; i >= 0; i--) {
+
+                NoteEvent noteEvent = timeline.get(i);
+
+                // set duration of respective NOTE_ON event
+                if (noteEvent.getKey() == key && noteEvent.getType() == NOTE_ON && noteEvent.getDuration() == 0) {
+                    noteEvent.setDuration(ticksToMilliseconds(tick) - noteEvent.getTimestamp());
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Returns an ordered list of tick-tempos between the given time frame.
+     *
+     * @return  List of tempos.
+     */
+    public ArrayList<Map.Entry<Long, Double>> getTempos(long ticki, long tickf) {
+
+        return new ArrayList<>(
+                tempo.subMap(
+                        tempo.floorKey(ticki),
+                        true,
+                        tickf,
+                        true
+                ).entrySet()
+        );
+    }
+
+
+    /**
+     * Converts ticks to milliseconds,
+     * taking into account tempo changes.
+     *
+     * @param tick Ticks.
+     *
+     * @return Milliseconds.
+     */
+    private int ticksToMilliseconds(long tick) {
+
+        int ms = 0;
+
+        ArrayList<Map.Entry<Long, Double>> tempos = getTempos(0, tick);
+
+        for (int i = 0; i < tempos.size(); i++) {
+
+            Map.Entry<Long, Double> entry = tempos.get(i);
+
+            // how many ticks passed
+            long deltaTick;
+
+            if (tempos.size() == 1) {
+                deltaTick = tick;
+            } else if (i == tempos.size() - 1) {
+                deltaTick = tick - entry.getKey();
+            } else {
+                Map.Entry<Long, Double> nextEntry = tempos.get(i + 1);
+                deltaTick = nextEntry.getKey() - entry.getKey();
+            }
+
+            // TODO SMPTE
+            int resolution = sequence.getResolution();
+            double ticksPerSecond = resolution * (entry.getValue() / 60.0);
+
+            ms += (int) ((deltaTick / ticksPerSecond) * 1000);
+        }
+
+        return ms;
     }
 
 
@@ -137,38 +229,5 @@ public class MidiTimeline {
      */
     public ArrayList<NoteEvent> getTimeline() {
         return timeline;
-    }
-
-
-    /**
-     * Returns tempo at current tick.
-     *
-     * @return {@link #tempo Tempo}.
-     */
-    public double getTempo(long tick) {
-
-        // key of return value
-        long latestTempo = 0;
-
-        for (Map.Entry<Long, Double> entry : tempo.entrySet())
-        {
-            // find current tempo
-            if (entry.getKey() <= tick && entry.getKey() >= latestTempo) {
-                latestTempo = entry.getKey();
-            }
-        }
-
-        return tempo.get(latestTempo);
-    }
-
-
-    /**
-     * Adds an entry to the tempo map.
-     *
-     * @param tempo {@link #tempo Tempo}.
-     */
-    public void addTempo(long tick, double tempo) {
-
-        this.tempo.put(tick, tempo);
     }
 }

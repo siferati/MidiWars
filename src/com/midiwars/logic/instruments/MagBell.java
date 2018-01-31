@@ -5,7 +5,7 @@ public class MagBell extends Instrument {
 
     /* --- DEFINES --- */
 
-    /** {@link Instrument#name Note}. */
+    /** {@link Instrument#name Name}. */
     public final static String NAME = "Magnanimous Choir Bell";
 
     /** {@link Instrument#canHold Can Hold}. */

@@ -12,9 +12,10 @@
 * Warnings
   * ~~Notes outside of instrument's range~~
   * ~~Tempo too fast~~
+  * Note spam
   * Notes too long
   * Pauses too long
-* Tempo changes in multiple tracks
+* ~~Tempo changes in multiple tracks~~
 * Time signatures different from x/4
 * All message types
 * SMPTE

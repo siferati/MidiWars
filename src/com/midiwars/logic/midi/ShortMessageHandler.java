@@ -65,8 +65,8 @@ public abstract class ShortMessageHandler {
         // get key number [0-127]
         int key = shortMessage.getData1();
 
-        // add note to timeline
-        midiTimeline.getTimeline().add(new NoteEvent(NOTE_ON, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo(tick)));
+        // add new note event to timeline
+        midiTimeline.addNoteEvent(NOTE_ON, key, tick);
     }
 
 
@@ -84,15 +84,7 @@ public abstract class ShortMessageHandler {
         // get key number [0-127]
         int key = shortMessage.getData1();
 
-        // add note release event to timeline
-        midiTimeline.getTimeline().add(new NoteEvent(NOTE_OFF, key, tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo(tick)));
-
-        // set duration of released note
-        for (NoteEvent noteEvent : midiTimeline.getTimeline()) {
-            if (noteEvent.getType() == NOTE_ON && noteEvent.getKey() == key && noteEvent.duration == 0) {
-                noteEvent.setNoteDuration(tick, midiTimeline.getSequence().getResolution(), midiTimeline.getTempo(tick));
-                return;
-            }
-        }
+        // add new note event to timeline
+        midiTimeline.addNoteEvent(NOTE_OFF, key, tick);
     }
 }

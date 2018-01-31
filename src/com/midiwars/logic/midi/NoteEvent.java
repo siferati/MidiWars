@@ -1,6 +1,6 @@
 package com.midiwars.logic.midi;
 
-import javax.sound.midi.ShortMessage;
+import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
  * Represents a midi event about a keypress (NOTE_ON) or keyrelease (NOTE_OFF).
@@ -18,10 +18,10 @@ public class NoteEvent implements Comparable<NoteEvent> {
     private final int key;
 
     /** Moment in time this event was generated (ms). */
-    private final int timestamp;
+    private int timestamp;
 
     /** How long the note was played for (ms). */
-    public int duration;
+    private int duration;
 
 
     /* --- METHODS --- */
@@ -31,51 +31,14 @@ public class NoteEvent implements Comparable<NoteEvent> {
      *
      * @param type NOTE_ON (0x90) or NOTE_OFF (0x80).
      * @param key Key number [0-127].
-     * @param tick NOTE_ON time-stamp (ticks).
-     * @param resolution Number of ticks per quarter note (PPQ), or per SMPTE frame (SMPTE).
-     * @param tempo Current tempo (BPM).
+     * @param timestamp Moment in time this event was generated (ms).
      */
-    public NoteEvent(int type, int key, long tick, int resolution, double tempo) {
+    public NoteEvent(int type, int key, int timestamp) {
 
         this.type = type;
         this.key = key;
+        this.timestamp = timestamp;
         duration = 0;
-        timestamp = ticksToMilliseconds(tick, resolution, tempo);
-    }
-
-
-    /**
-     * Converts ticks to milliseconds,
-     * according to given tempo and resolution.
-     *
-     * @param tick Ticks.
-     * @param resolution Number of ticks per quarter note (PPQ), or per SMPTE frame (SMPTE).
-     * @param tempo Beats per minute.
-     *
-     * @return Seconds.
-     */
-    private int ticksToMilliseconds(long tick, int resolution, double tempo) {
-
-        // TODO constructor e metodo: em vez de passar tick, passar deltaTick = tick - previousTick (o resto fica tudo igual)
-        if (tempo == 60) {
-            System.out.println("debug: ola");
-        }
-
-        // TODO SMPTE
-        double ticksPerSecond = resolution * (tempo / 60.0);
-        return (int) ((tick / ticksPerSecond) * 1000);
-    }
-
-
-    /**
-     * Sets the duration of this event based on the NOTE_OFF time-stamp.
-     *
-     * @param tick NOTE_OFF time-stamp (ticks).
-     * @param resolution Number of ticks per quarter note (PPQ), or per SMPTE frame (SMPTE).
-     * @param tempo Current tempo (BPM).
-     */
-    public void setNoteDuration(long tick, int resolution, double tempo) {
-        duration = ticksToMilliseconds(tick, resolution, tempo) - timestamp;
     }
 
 
@@ -91,7 +54,7 @@ public class NoteEvent implements Comparable<NoteEvent> {
 
     @Override
     public String toString() {
-        if (type == ShortMessage.NOTE_ON) {
+        if (type == NOTE_ON) {
             return "NOTE_ON: " + timestamp + ", KEY: " + key;
         } else {
             return "NOTE_OFF: " + timestamp + ", KEY: " + key;
@@ -137,4 +100,15 @@ public class NoteEvent implements Comparable<NoteEvent> {
     public int getDuration() {
         return duration;
     }
+
+
+    /**
+     * Sets {@link #duration}.
+     *
+     * @param duration New duration.
+     */
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
 }

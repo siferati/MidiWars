@@ -42,7 +42,7 @@ public abstract class Instrument {
 
     /* --- ATTRIBUTES --- */
 
-    /** Note of the instrument. */
+    /** Name of the instrument. */
     private final String name;
 
     /** True if the instrument can hold notes (ie note duration matters). */
@@ -72,7 +72,7 @@ public abstract class Instrument {
     /**
      * Constructor.
      *
-     * @param name Note of the instrument.
+     * @param name Name of the instrument.
      * @param canHold If the instrument can hold notes.
      * @param keybars Each line represents a skill bar (usually an octave).
      * @param idleKeybarIndex The active key bar before and after the midi timeline is played.

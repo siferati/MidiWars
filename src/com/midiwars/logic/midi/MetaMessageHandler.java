@@ -70,6 +70,6 @@ public class MetaMessageHandler {
         // 1 min = 60 s = 60 000 000 ms
         midiTimeline.addTempo(tick, (60.0 * 1000000) / mspq);
 
-        System.out.println("debug: SET_TEMPO: " + midiTimeline.getTempo(tick) + " BPM.");
+        System.out.println("debug: SET_TEMPO: " + ((60.0 * 1000000) / mspq) + " BPM.");
     }
 }
