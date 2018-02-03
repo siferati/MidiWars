@@ -16,7 +16,6 @@
   * Notes too long
   * Pauses too long
 * ~~Tempo changes in multiple tracks~~
-* Time signatures different from x/4
 * All message types
 * SMPTE
 * Instruments

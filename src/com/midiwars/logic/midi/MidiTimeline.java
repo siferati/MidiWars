@@ -27,7 +27,9 @@ public class MidiTimeline {
     /** Notes played. */
     private ArrayList<NoteEvent> timeline;
 
-    /** Maps tempo (bpm) changes (SET_TEMPO midi message) to the instant (tick) it happens. */
+    /** Maps tempo (QPM) changes (SET_TEMPO midi message) to the instant (tick) it happens.
+     * Note that tempo is mapped as QPM (quarter-note per minute) and not the usual BPM (beat per minute).
+     * This makes it so that all time signatures are handled the same way. */
     private TreeMap<Long, Double> tempo;
 
 
@@ -139,11 +141,13 @@ public class MidiTimeline {
      */
     public void addNoteEvent(int type, int key, long tick) {
 
+        int timestamp = ticksToMilliseconds(tick);
+
         // add note event
         timeline.add(new NoteEvent(
                 type,
                 key,
-                ticksToMilliseconds(tick)
+                timestamp
         ));
 
         // key released
@@ -156,7 +160,7 @@ public class MidiTimeline {
 
                 // set duration of respective NOTE_ON event
                 if (noteEvent.getKey() == key && noteEvent.getType() == NOTE_ON && noteEvent.getDuration() == 0) {
-                    noteEvent.setDuration(ticksToMilliseconds(tick) - noteEvent.getTimestamp());
+                    noteEvent.setDuration(timestamp - noteEvent.getTimestamp());
                 }
             }
         }
@@ -214,8 +218,10 @@ public class MidiTimeline {
             // TODO SMPTE
             int resolution = sequence.getResolution();
             double ticksPerSecond = resolution * (entry.getValue() / 60.0);
+            // duration of each tick (ms)
+            double tickSize = (1.0 / ticksPerSecond) * 1000;
 
-            ms += (int) ((deltaTick / ticksPerSecond) * 1000);
+            ms += (int) (deltaTick * tickSize);
         }
 
         return ms;

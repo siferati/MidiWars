@@ -18,7 +18,7 @@ public class NoteEvent implements Comparable<NoteEvent> {
     private final int key;
 
     /** Moment in time this event was generated (ms). */
-    private int timestamp;
+    private final int timestamp;
 
     /** How long the note was played for (ms). */
     private int duration;
@@ -55,9 +55,9 @@ public class NoteEvent implements Comparable<NoteEvent> {
     @Override
     public String toString() {
         if (type == NOTE_ON) {
-            return "NOTE_ON: " + timestamp + ", KEY: " + key;
+            return "NOTE_ON: " + timestamp + ", KEY: " + key + ", DURATION: " + duration;
         } else {
-            return "NOTE_OFF: " + timestamp + ", KEY: " + key;
+            return "NOTE_OFF: " + timestamp + ", KEY: " + key + ", DURATION: " + duration;
         }
     }
 
