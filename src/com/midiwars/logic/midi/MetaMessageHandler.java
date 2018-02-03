@@ -50,7 +50,7 @@ public class MetaMessageHandler {
     }
 
 
-    /** TODO this assumes time signature is x/4
+    /**
      * Called when MetaMessage is of type SET_TEMPO.
      *
      * @param midiTimeline midi timeline.
@@ -69,7 +69,5 @@ public class MetaMessageHandler {
 
         // 1 min = 60 s = 60 000 000 ms
         midiTimeline.addTempo(tick, (60.0 * 1000000) / mspq);
-
-        System.out.println("debug: SET_TEMPO: " + ((60.0 * 1000000) / mspq) + " QPM.");
     }
 }

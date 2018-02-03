@@ -17,7 +17,7 @@
   * Pauses too long
 * ~~Tempo changes in multiple tracks~~
 * All message types
-* SMPTE
+* ~~SMPTE~~
 * Instruments
   * Flute
   * ~~Magnanimous Choir Bell~~

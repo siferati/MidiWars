@@ -7,6 +7,7 @@ import java.util.*;
 
 import static com.midiwars.logic.midi.MetaMessageHandler.metaMessageHandler;
 import static com.midiwars.logic.midi.ShortMessageHandler.shortMessageHandler;
+import static javax.sound.midi.Sequence.*;
 import static javax.sound.midi.ShortMessage.NOTE_OFF;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
@@ -187,7 +188,8 @@ public class MidiTimeline {
 
     /**
      * Converts ticks to milliseconds,
-     * taking into account tempo changes.
+     * taking into account division type
+     * and tempo changes (if applicable).
      *
      * @param tick Ticks.
      *
@@ -197,31 +199,57 @@ public class MidiTimeline {
 
         int ms = 0;
 
-        ArrayList<Map.Entry<Long, Double>> tempos = getTempos(0, tick);
+        float division = sequence.getDivisionType();
+        int resolution = sequence.getResolution();
 
-        for (int i = 0; i < tempos.size(); i++) {
+        if (division == PPQ) {
 
-            Map.Entry<Long, Double> entry = tempos.get(i);
+            ArrayList<Map.Entry<Long, Double>> tempos = getTempos(0, tick);
 
-            // how many ticks passed
-            long deltaTick;
+            for (int i = 0; i < tempos.size(); i++) {
 
-            if (tempos.size() == 1) {
-                deltaTick = tick;
-            } else if (i == tempos.size() - 1) {
-                deltaTick = tick - entry.getKey();
+                Map.Entry<Long, Double> entry = tempos.get(i);
+
+                // how many ticks passed
+                long deltaTick;
+
+                if (tempos.size() == 1) {
+                    deltaTick = tick;
+                } else if (i == tempos.size() - 1) {
+                    deltaTick = tick - entry.getKey();
+                } else {
+                    Map.Entry<Long, Double> nextEntry = tempos.get(i + 1);
+                    deltaTick = nextEntry.getKey() - entry.getKey();
+                }
+
+                double ticksPerSecond = resolution * (entry.getValue() / 60.0);
+
+                // duration of each tick (ms)
+                double tickSize = (1.0 / ticksPerSecond) * 1000;
+
+                ms += (int) (deltaTick * tickSize);
+            }
+        }
+        else {
+
+            float framesPerSecond;
+
+            if (division == SMPTE_24) {
+                framesPerSecond = 24;
+            } else if (division == SMPTE_25) {
+                framesPerSecond = 25;
+            } else if (division == SMPTE_30) {
+                framesPerSecond = 30;
             } else {
-                Map.Entry<Long, Double> nextEntry = tempos.get(i + 1);
-                deltaTick = nextEntry.getKey() - entry.getKey();
+                framesPerSecond = (float) 29.97;
             }
 
-            // TODO SMPTE
-            int resolution = sequence.getResolution();
-            double ticksPerSecond = resolution * (entry.getValue() / 60.0);
+            double ticksPerSecond = resolution * framesPerSecond;
+
             // duration of each tick (ms)
             double tickSize = (1.0 / ticksPerSecond) * 1000;
 
-            ms += (int) (deltaTick * tickSize);
+            ms += (int) (tick * tickSize);
         }
 
         return ms;

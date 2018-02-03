@@ -55,9 +55,9 @@ public class NoteEvent implements Comparable<NoteEvent> {
     @Override
     public String toString() {
         if (type == NOTE_ON) {
-            return "NOTE_ON: " + timestamp + ", KEY: " + key + ", DURATION: " + duration;
+            return "NOTE_ON: " + timestamp + ", KEY: " + key;
         } else {
-            return "NOTE_OFF: " + timestamp + ", KEY: " + key + ", DURATION: " + duration;
+            return "NOTE_OFF: " + timestamp + ", KEY: " + key;
         }
     }
 

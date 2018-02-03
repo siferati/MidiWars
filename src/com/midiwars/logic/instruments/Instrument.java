@@ -144,8 +144,6 @@ public abstract class Instrument {
                 robot.keyPress(keybind);
                 heldKeybind = keybind;
 
-                System.out.println("debug: Played: " + noteEvent);
-
                 // if there's time, look into the future and preemptively change key bars if needed
                 if (delay > 0 && !canHold) {
                     delay -= preemptivelyChangeKeybars(i, timeline);
@@ -154,7 +152,6 @@ public abstract class Instrument {
 
             // case NOTE_OFF
             else {
-                System.out.println("debug: Releasing: " + noteEvent);
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
                 if (keybind == heldKeybind) {
                     robot.keyRelease(keybind);
@@ -408,10 +405,8 @@ public abstract class Instrument {
             // decide key bar change direction
             if (deltaKeybarIndex > 0) {
                 keybind = Keymap.OCTAVEUP_KEYBIND;
-                System.out.println("debug: KEYBAR_UP");
             } else {
                 keybind = Keymap.OCTAVEDOWN_KEYBIND;
-                System.out.println("debug: KEYBAR_DOWN");
             }
 
             // if there's a key being held down
