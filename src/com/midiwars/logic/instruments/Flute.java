@@ -1,23 +1,22 @@
 package com.midiwars.logic.instruments;
 
-
 /**
- * Tuned in C Major [C5, C7].
+ * Tuned in E Major [E4, E6].
  */
-public class MagBell extends Instrument {
+public class Flute extends Instrument {
 
     /* --- DEFINES --- */
 
     /** {@link Instrument#name Name}. */
-    public final static String NAME = "Magnanimous Choir Bell";
+    public final static String NAME = "Flute";
 
     /** {@link Instrument#canHold Can Hold}. */
-    public final static boolean CAN_HOLD = false;
+    public final static boolean CAN_HOLD = true;
 
     /** {@link Instrument#keybars Key bars}. */
     public final static int[][] KEYBARS = {
-            {72, 74, 76, 77, 79, 81, 83, 84},
-            {84, 86, 88, 89, 91, 93, 95, 96}
+            {64, 66, 68, 69, 71, 73, 75, 76},
+            {76, 78, 80, 81, 83, 85, 87, 88}
     };
 
     /** {@link Instrument#idleKeybarIndex Idle Key bar Index}. */
@@ -29,7 +28,7 @@ public class MagBell extends Instrument {
     /**
      * Constructor.
      */
-    public MagBell() {
+    public Flute() {
         super(NAME, CAN_HOLD, KEYBARS, IDLE_KEYBAR_INDEX);
     }
 }

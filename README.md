@@ -18,12 +18,12 @@
 * ~~Tempo changes in multiple tracks~~
 * ~~SMPTE~~
 * Instruments
-  * Flute
+  * ~~Flute~~
   * ~~Magnanimous Choir Bell~~
-  * Marriner's Horn
-  * Musical Bass Guitar
-  * Musical Harp
-  * Musical Lute
+  * Marriner's Horn (tuning?)
+  * Musical Bass Guitar (1st of June, 2016, update?)
+  * ~~Musical Harp~~
+  * Musical Lute (1st of June, 2016, update?)
 * CLI
 * In-game chat commands
 * GUI (overlay)
