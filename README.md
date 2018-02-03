@@ -16,7 +16,6 @@
   * Notes too long
   * Pauses too long
 * ~~Tempo changes in multiple tracks~~
-* All message types
 * ~~SMPTE~~
 * Instruments
   * Flute

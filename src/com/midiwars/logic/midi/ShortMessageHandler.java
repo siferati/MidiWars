@@ -33,11 +33,8 @@ public abstract class ShortMessageHandler {
                 break;
             }
 
-            default: {
-
-                System.out.println("debug: Unknown Short Message command: 0x" + Integer.toHexString(shortMessage.getCommand()).toUpperCase());
+            default:
                 break;
-            }
         }
     }
 

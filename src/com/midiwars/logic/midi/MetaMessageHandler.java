@@ -9,9 +9,6 @@ public class MetaMessageHandler {
 
     /* --- DEFINES --- */
 
-    /** This event indicates the end of a track. */
-    public static final int END_OF_TRACk = 0x2F;
-
     /** This event indicates a tempo change. */
     public static final int SET_TEMPO = 0x51;
 
@@ -29,23 +26,14 @@ public class MetaMessageHandler {
 
         switch (metaMessage.getType()) {
 
-            case END_OF_TRACk: {
-
-                System.out.println("debug: END_OF_TRACK");
-                break;
-            }
-
             case SET_TEMPO: {
 
                 setTempo(midiTimeline, metaMessage, tick);
                 break;
             }
 
-            default: {
-
-                System.out.println("debug: Unknown Meta Message type: 0x" + Integer.toHexString(metaMessage.getType()).toUpperCase());
+            default:
                 break;
-            }
         }
     }
 

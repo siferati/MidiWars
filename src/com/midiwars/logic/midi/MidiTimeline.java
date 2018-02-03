@@ -109,11 +109,6 @@ public class MidiTimeline {
                 else if (message instanceof MetaMessage) {
                    metaMessageHandler(this, (MetaMessage) message, tick);
                 }
-
-                // case SysexMessage
-                else if (message instanceof SysexMessage) {
-                    // TODO ...
-                }
             }
         }
 
