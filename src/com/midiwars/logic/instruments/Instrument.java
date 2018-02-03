@@ -34,10 +34,19 @@ public abstract class Instrument {
     }
 
     /** Amount of time robot sleeps after a key bar change (ms). */
-    public static int ROBOT_SLEEP = 50;
+    public static final int ROBOT_SLEEP = 50;
 
     /** Minimum amount of time needed in-between key bar changes (ms). */
-    public static int KEYBAR_COOLDOWN = 200;
+    public static final int KEYBAR_COOLDOWN = 200;
+
+    /** Upper limit to a note's duration (ms) - note will be played twice if duration is higher than this value. */
+    public static final int NOTE_DURATION_LIMIT = 2250;
+
+    /** Upper limit to a pause's duration (ms) - longer pauses are probably due to errors in the midi file. */
+    public static final int PAUSE_DURATION_LIMIT = 10000;
+
+    /** Maximum amount of time (ms) Robot.delay() can sleep for. */
+    public static final int ROBOT_MAX_SLEEP = 60000;
 
 
     /* --- ATTRIBUTES --- */
@@ -170,8 +179,8 @@ public abstract class Instrument {
 
                 // robot.delay() doesn't handle higher values
                 // and I don't want to Thread.sleep()
-                if (delay > 60000) {
-                    delay = 60000;
+                if (delay > ROBOT_MAX_SLEEP) {
+                    delay = ROBOT_MAX_SLEEP;
                 }
 
                 robot.delay(delay);
@@ -233,6 +242,10 @@ public abstract class Instrument {
         if (!isInRange(timeline)) warnings.add(NOT_IN_RANGE);
 
         if (isTooFast(timeline)) warnings.add(TEMPO_TOO_FAST);
+
+        if (areNotesTooLong(timeline)) warnings.add(NOTES_TOO_LONG);
+
+        if (arePausesTooLong(timeline)) warnings.add(PAUSES_TOO_LONG);
 
         return warnings;
     }
@@ -365,6 +378,46 @@ public abstract class Instrument {
         }
 
         return true;
+    }
+
+
+    /**
+     * Checks if there are any notes that go over the duration limit.
+     *
+     * @param timeline Timeline to assess.
+     *
+     * @return True if there's at least one note above the limit, False otherwise.
+     */
+    public boolean areNotesTooLong(ArrayList<NoteEvent> timeline) {
+
+        for (NoteEvent noteEvent : timeline) {
+
+            if (noteEvent.getDuration() > NOTE_DURATION_LIMIT) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Checks if there are pauses (time between events) that go over the duration limit.
+     *
+     * @param timeline Timeline to assess.
+     *
+     * @return True if there's at least one pause above the limit, False otherwise.
+     */
+    public boolean arePausesTooLong(ArrayList<NoteEvent> timeline) {
+
+        for (int i = 0; i < timeline.size() - 1; i++) {
+
+            if (timeline.get(i+1).getTimestamp() - timeline.get(i).getTimestamp() > PAUSE_DURATION_LIMIT) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 

@@ -14,11 +14,11 @@ public class MidiWars {
     /* --- DEFINES --- */
 
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\test.mid";
-    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Shigatsu wa Kimi no Uso.mid";
+    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Shigatsu wa Kimi no Uso.mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\HesaPirate.mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\New Empire - A Little Braver (mid).mid";
     //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill.mid";
+    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill.mid";
 
 
     /* --- ATTRIBUTES --- */
@@ -48,7 +48,7 @@ public class MidiWars {
                         System.out.println("This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
                         break;
                     case NOTES_TOO_LONG:
-                        System.out.println("This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback");
+                        System.out.println("This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
                         break;
                     case PAUSES_TOO_LONG:
                         System.out.println("This midi file contains pauses that are too long - probably due to an error in the midi file.");
@@ -59,8 +59,8 @@ public class MidiWars {
                 }
             }
 
-            Thread.sleep(5000);
-            magBell.play(midiTimeline);
+            //Thread.sleep(5000);
+            //magBell.play(midiTimeline);
         }
         catch (Exception e) {
             e.printStackTrace();

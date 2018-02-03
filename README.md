@@ -13,8 +13,8 @@
   * ~~Notes outside of instrument's range~~
   * ~~Tempo too fast~~
   * Note spam
-  * Notes too long
-  * Pauses too long
+  * ~~Notes too long~~
+  * ~~Pauses too long~~
 * ~~Tempo changes in multiple tracks~~
 * ~~SMPTE~~
 * Instruments
