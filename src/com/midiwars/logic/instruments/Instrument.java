@@ -33,6 +33,22 @@ public abstract class Instrument {
         PAUSES_TOO_LONG
     }
 
+
+    /**
+     * Thrown when the given midi file can't be properly played.
+     *
+     * @see Warning
+     */
+    public static class CantPlayMidiException extends Exception {
+
+        public ArrayList<Warning> warnings;
+        public CantPlayMidiException(ArrayList<Warning> warnings) {
+            super();
+            this.warnings = warnings;
+        }
+    }
+
+
     /** Amount of time robot sleeps after a key bar change (ms). */
     public static final int ROBOT_SLEEP = 50;
 
@@ -231,9 +247,11 @@ public abstract class Instrument {
      *
      * @param midiTimeline Timeline to assess.
      *
-     * @return List of warnings related to the given midi timeline.
+     * @return True if there were no warnings.
+     *
+     * @throws CantPlayMidiException If the timeline can't be properly played.
      */
-    public ArrayList<Warning> canPlay(MidiTimeline midiTimeline) {
+    public boolean canPlay(MidiTimeline midiTimeline) throws CantPlayMidiException {
 
         ArrayList<Warning> warnings = new ArrayList<>();
 
@@ -286,7 +304,11 @@ public abstract class Instrument {
         previousKeybarChange = -1;
         activeKeybarIndex = idleKeybarIndex;
 
-        return warnings;
+        if (warnings.size() > 0) {
+            throw new CantPlayMidiException(warnings);
+        } else {
+            return true;
+        }
     }
 
 

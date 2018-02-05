@@ -41,7 +41,7 @@ public class MidiTimeline {
      *
      * @param filepath Path to midi file.
      *
-     * @throws InvalidMidiDataException midi file is invalid.
+     * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
      */
     public MidiTimeline(String filepath) throws InvalidMidiDataException, IOException {

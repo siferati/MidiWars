@@ -1,27 +1,32 @@
 package com.midiwars.logic;
 
-import com.midiwars.logic.instruments.Instrument.Warning;
+import com.midiwars.logic.instruments.Instrument.*;
 import com.midiwars.logic.instruments.MagBell;
 import com.midiwars.logic.midi.MidiTimeline;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
-import java.util.ArrayList;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 
 /**
- * Represents the application itself
+ * Represents the application itself.
  */
 public class MidiWars {
 
     /* --- DEFINES --- */
 
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\test.mid";
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Shigatsu wa Kimi no Uso.mid";
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\HesaPirate.mid";
-    public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\New Empire - A Little Braver (mid).mid";
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Memory - Undertale (c major).mid";
-    //public static String FILEPATH = "C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\midi Files\\Light your heart up - Kill la Kill.mid";
-
+    public static final String CONFIGPATH = "./config.xml";
 
     /* --- ATTRIBUTES --- */
+
+    private String midiPath;
+    private String apiKey;
 
 
     /* --- METHODS --- */
@@ -29,41 +34,60 @@ public class MidiWars {
     /**
      * Default Constructor.
      */
-    public MidiWars() {
+    public MidiWars() throws IOException, SAXException, ParserConfigurationException, NullPointerException {
 
+        loadConfigs();
+    }
+
+
+    /**
+     * Plays the given midi file.
+     *
+     * @param filepath Path of midi file to play.
+     *
+     * @throws InvalidMidiDataException Midi file is invalid.
+     * @throws IOException Can't open file.
+     * @throws CantPlayMidiException If the midi file can't be properly played.
+     * @throws InterruptedException If thread was interrupted while sleeping.
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     */
+    public void play(String filepath) throws InvalidMidiDataException, IOException, CantPlayMidiException, InterruptedException, AWTException {
+
+        // construct timeline from midi file
+        MidiTimeline midiTimeline = new MidiTimeline("C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\Midi Files\\" + filepath);
+
+        // TODO fetch instrument from api return true false in method
+        MagBell magBell = new MagBell();
+
+        // check for warnings
         try {
-
-            // construct timeline from midi file
-            MidiTimeline midiTimeline = new MidiTimeline(FILEPATH);
-
-            MagBell magBell = new MagBell();
-
-            ArrayList<Warning> warnings = magBell.canPlay(midiTimeline);
-            for (Warning warning: warnings) {
-                switch (warning) {
-                    case NOT_IN_RANGE:
-                        System.out.println("This midi file contains notes that this instrument can not play, therefore they will be skipped during playback.");
-                        break;
-                    case TEMPO_TOO_FAST:
-                        System.out.println("This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
-                        break;
-                    case NOTES_TOO_LONG:
-                        System.out.println("This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
-                        break;
-                    case PAUSES_TOO_LONG:
-                        System.out.println("This midi file contains pauses that are too long - probably due to an error in the midi file.");
-                        break;
-                    default:
-                        System.out.println("Unknown warning caused by this midi file.");
-                        break;
-                }
-            }
-
-            //Thread.sleep(5000);
-            //magBell.play(midiTimeline);
+            magBell.canPlay(midiTimeline);
+        } finally {
+            Thread.sleep(5000);
+            magBell.play(midiTimeline);
         }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+    }
+
+
+    /**
+     * Parses configuration file
+     * and loads necessary info.
+     *
+     * @throws ParserConfigurationException If there was a configuration error within the parser.
+     * @throws IOException If configurations file is missing.
+     * @throws SAXException If couldn't parse configurations file.
+     * @throws NullPointerException If configurations file doesn't have required format.
+     */
+    private void loadConfigs() throws ParserConfigurationException, IOException, SAXException, NullPointerException {
+
+        // setup doc
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setIgnoringElementContentWhitespace(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(new File(CONFIGPATH));
+
+        // get first occurrence only
+        midiPath = doc.getDocumentElement().getElementsByTagName("midipath").item(0).getTextContent();
+        apiKey = doc.getDocumentElement().getElementsByTagName("apikey").item(0).getTextContent();
     }
 }
