@@ -239,185 +239,181 @@ public abstract class Instrument {
 
         ArrayList<NoteEvent> timeline = midiTimeline.getTimeline();
 
-        if (!isInRange(timeline)) warnings.add(NOT_IN_RANGE);
+        // control
+        boolean isInRange = true;
+        boolean isTooFast = false;
+        boolean areNotesTooLong = false;
+        boolean arePausesTooLong = false;
 
-        if (isTooFast(timeline)) warnings.add(TEMPO_TOO_FAST);
+        // reset
+        previousKeybarChange = -1;
+        activeKeybarIndex = idleKeybarIndex;
 
-        if (areNotesTooLong(timeline)) warnings.add(NOTES_TOO_LONG);
+        NoteEvent previousNoteEvent = null;
+        NoteEvent previousNoteOnEvent = null;
 
-        if (arePausesTooLong(timeline)) warnings.add(PAUSES_TOO_LONG);
+        for (NoteEvent noteEvent: timeline) {
+
+            if (isInRange && !isInRange(noteEvent)) {
+                warnings.add(NOT_IN_RANGE);
+                isInRange = false;
+            }
+
+            if (!isTooFast && isTooFast(previousNoteOnEvent, noteEvent)) {
+                warnings.add(TEMPO_TOO_FAST);
+                isTooFast = true;
+            }
+
+            if (!areNotesTooLong && areNotesTooLong(noteEvent)) {
+                warnings.add(NOTES_TOO_LONG);
+                areNotesTooLong = true;
+            }
+
+            if (!arePausesTooLong && arePausesTooLong(previousNoteEvent, noteEvent)) {
+                warnings.add(PAUSES_TOO_LONG);
+                arePausesTooLong = true;
+            }
+
+            // prepare nex ite
+            previousNoteEvent = noteEvent;
+            if (noteEvent.getType() == NOTE_ON) {
+                previousNoteOnEvent = noteEvent;
+            }
+
+        }
+
+        // reset
+        previousKeybarChange = -1;
+        activeKeybarIndex = idleKeybarIndex;
 
         return warnings;
     }
 
 
     /**
-     * Checks if the given timeline key bar changes aren't too fast,
+     * Checks if the given note doesn't require key bar changes that are too fast,
      * thus hindering playback.
      *
-     * @param timeline Timeline to assess.
+     * @param previousNoteOnEvent Previous NOTE_ON event assessed.
+     * @param noteEvent Current note event being assessed.
      *
-     * @return True if timeline is too fast for playback, False if it's ok.
+     * @return True if note will hinder playback, False otherwise.
      */
-    public boolean isTooFast(ArrayList<NoteEvent> timeline) {
+    private boolean isTooFast(NoteEvent previousNoteOnEvent, NoteEvent noteEvent) {
 
-        // reset
-        previousKeybarChange = -1;
-        activeKeybarIndex = idleKeybarIndex;
-        NoteEvent previousNoteOnEvent = null;
+        int keybarIndex = getKeybarIndex(noteEvent.getKey());
 
-        for (NoteEvent noteEvent : timeline) {
+        // ignore if note can't be played
+        if (keybarIndex < 0 || noteEvent.getType() != NOTE_ON) {
+            return false;
+        }
 
-            int keybarIndex = getKeybarIndex(noteEvent.getKey());
+        // how many key bars are necessary to change
+        int deltaKeybarIndex = keybarIndex - activeKeybarIndex;
 
-            // ignore if note can't be played
-            if (keybarIndex < 0 || noteEvent.getType() != NOTE_ON) {
-                continue;
-            }
+        // if there's a need to change key bar
+        if (deltaKeybarIndex != 0) {
 
-            // how many key bars are necessary to change
-            int deltaKeybarIndex = keybarIndex - activeKeybarIndex;
+            // if it's not the first time
+            if (previousKeybarChange > -1) {
 
-            // if there's a need to change key bar
-            if (deltaKeybarIndex != 0) {
+                // how much time passed since the previous key bar change (ms)
+                int deltaKeybarChange = (int) (noteEvent.getTimestamp() - previousKeybarChange);
 
-                // if it's not the first time
-                if (previousKeybarChange > -1) {
+                // ---------------------------------------------------------------
+                // these IFs could be under a single statement using OR operator,
+                // but it's already hard enough to read as it is, so...
+                // ---------------------------------------------------------------
 
-                    // how much time passed since the previous key bar change (ms)
-                    int deltaKeybarChange = (int) (noteEvent.getTimestamp() - previousKeybarChange);
+                boolean exit = false;
 
-                    // ---------------------------------------------------------------
-                    // these IFs could be under a single statement using OR operator,
-                    // but it's already hard enough to read as it is, so...
-                    // ---------------------------------------------------------------
+                // change is too fast, key bar change cooldown hasn't passed yet
+                if (deltaKeybarChange < Math.abs(deltaKeybarIndex) * KEYBAR_COOLDOWN) {
+                    exit = true;
+                }
 
-                    boolean exit = false;
+                // change is too fast, robot.delay() after octave change will affect note playtime
+                else if (previousNoteOnEvent != null && noteEvent.getTimestamp() != previousNoteOnEvent.getTimestamp()) {
 
-                    // change is too fast, key bar change cooldown hasn't passed yet
-                    if (deltaKeybarChange < Math.abs(deltaKeybarIndex) * KEYBAR_COOLDOWN) {
+                    // instrument can't hold notes
+                    if ((!canHold &&
+                            (noteEvent.getTimestamp() < previousNoteOnEvent.getTimestamp() + ROBOT_SLEEP))) {
                         exit = true;
                     }
 
-                    // change is too fast, robot.delay() after octave change will affect note playtime
-                    else if (previousNoteOnEvent != null && noteEvent.getTimestamp() != previousNoteOnEvent.getTimestamp()) {
-
-                        // instrument can't hold notes
-                        if ((!canHold &&
-                                (noteEvent.getTimestamp() < previousNoteOnEvent.getTimestamp() + ROBOT_SLEEP))) {
-                            exit = true;
-                        }
-
-                        // instrument can hold notes
-                        else if ((canHold &&
-                                (noteEvent.getTimestamp() < previousNoteOnEvent.getTimestamp() + previousNoteOnEvent.getDuration() + ROBOT_SLEEP))) {
-                            exit = true;
-                        }
-                    }
-
-                    // can't properly play this midi timeline
-                    if (exit) {
-
-                        // reset
-                        previousKeybarChange = -1;
-                        activeKeybarIndex = idleKeybarIndex;
-
-                        return true;
+                    // instrument can hold notes
+                    else if ((canHold &&
+                            (noteEvent.getTimestamp() < previousNoteOnEvent.getTimestamp() + previousNoteOnEvent.getDuration() + ROBOT_SLEEP))) {
+                        exit = true;
                     }
                 }
 
-                if (!canHold && previousNoteOnEvent != null) {
-                    previousKeybarChange = previousNoteOnEvent.getTimestamp();
+                // can't properly play this midi timeline
+                if (exit) {
+                    return true;
                 }
-                if (canHold && previousNoteOnEvent != null) {
-                    previousKeybarChange = previousNoteOnEvent.getTimestamp() + previousNoteOnEvent.getDuration();
-                }
-
-                activeKeybarIndex = keybarIndex;
             }
 
-            previousNoteOnEvent = noteEvent;
-        }
+            if (!canHold && previousNoteOnEvent != null) {
+                previousKeybarChange = previousNoteOnEvent.getTimestamp();
+            }
+            if (canHold && previousNoteOnEvent != null) {
+                previousKeybarChange = previousNoteOnEvent.getTimestamp() + previousNoteOnEvent.getDuration();
+            }
 
-        // reset
-        previousKeybarChange = -1;
-        activeKeybarIndex = idleKeybarIndex;
+            activeKeybarIndex = keybarIndex;
+        }
 
         // can play this midi timeline
         return false;
-
     }
 
 
     /**
-     * Checks if every note in the given timeline can be played by this instrument.
+     * Checks if given note can be played by this instrument.
      *
-     * @param timeline Timeline to assess.
+     * @param noteEvent Note event to assess.
      *
-     * @return True if every note is in range, False otherwise.
+     * @return True if note is in range, False otherwise.
      */
-    public boolean isInRange(ArrayList<NoteEvent> timeline) {
+    private boolean isInRange(NoteEvent noteEvent) {
 
-        for (NoteEvent noteEvent : timeline) {
-
-            boolean found = false;
-
-            search:
-            for (int[] keybar : keybars) {
-                for (int key : keybar) {
-                    if (key == noteEvent.getKey()) {
-                        found = true;
-                        break search;
-                    }
+        for (int[] keybar : keybars) {
+            for (int key : keybar) {
+                if (key == noteEvent.getKey()) {
+                    return true;
                 }
-            }
-
-            if (!found) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Checks if there are any notes that go over the duration limit.
-     *
-     * @param timeline Timeline to assess.
-     *
-     * @return True if there's at least one note above the limit, False otherwise.
-     */
-    public boolean areNotesTooLong(ArrayList<NoteEvent> timeline) {
-
-        for (NoteEvent noteEvent : timeline) {
-
-            if (noteEvent.getDuration() > NOTE_DURATION_LIMIT) {
-                return true;
             }
         }
 
         return false;
+    }
+
+
+    /**
+     * Checks if the given note goes over the duration limit.
+     *
+     * @param noteEvent Note event to assess.
+     *
+     * @return True if note is above the limit, False otherwise.
+     */
+    private boolean areNotesTooLong(NoteEvent noteEvent) {
+
+        return (noteEvent.getDuration() > NOTE_DURATION_LIMIT);
     }
 
 
     /**
      * Checks if there are pauses (time between events) that go over the duration limit.
      *
-     * @param timeline Timeline to assess.
+     * @param previousNoteEvent Previous note event assessed.
+     * @param noteEvent Current note event being assessed.
      *
-     * @return True if there's at least one pause above the limit, False otherwise.
+     * @return True if pause is above the limit, False otherwise.
      */
-    public boolean arePausesTooLong(ArrayList<NoteEvent> timeline) {
+    private boolean arePausesTooLong(NoteEvent previousNoteEvent, NoteEvent noteEvent) {
 
-        for (int i = 0; i < timeline.size() - 1; i++) {
-
-            if (timeline.get(i+1).getTimestamp() - timeline.get(i).getTimestamp() > PAUSE_DURATION_LIMIT) {
-                return true;
-            }
-        }
-
-        return false;
+        return (previousNoteEvent != null && noteEvent.getTimestamp() - previousNoteEvent.getTimestamp() > PAUSE_DURATION_LIMIT);
     }
 
 

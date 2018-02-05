@@ -24,7 +24,8 @@
   * Musical Bass Guitar (1st of June, 2016, update?)
   * ~~Musical Harp~~
   * Musical Lute (1st of June, 2016, update?)
-* CLI
+* CLI (config.xml)
+* Fetch equipped instrument from API
+* Process targeted keyboard input
 * In-game chat commands
 * GUI (overlay)
-* GUI (preferences)
