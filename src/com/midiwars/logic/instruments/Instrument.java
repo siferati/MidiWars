@@ -49,6 +49,17 @@ public abstract class Instrument {
     }
 
 
+    /**
+     * Thrown when the default instrument in the configurations file is invalid.
+     */
+    public static class InvalidInstrumentException extends Exception {
+
+        public InvalidInstrumentException() {
+            super();
+        }
+    }
+
+
     /** Amount of time robot sleeps after a key bar change (ms). */
     public static final int ROBOT_SLEEP = 50;
 
@@ -112,6 +123,28 @@ public abstract class Instrument {
         robot = null;
         previousKeybarChange = -1;
         heldKeybind = -1;
+    }
+
+
+    /**
+     * Returns a new instrument of given name.
+     *
+     * @param name Name of the instrument.
+     *
+     * @return New instrument.
+     */
+    public static Instrument newInstrument(String name){
+
+        switch (name) {
+
+            case MagBell.NAME: return new MagBell();
+
+            case Flute.NAME: return new Flute();
+
+            case Harp.NAME:return new Harp();
+
+            default: return null;
+        }
     }
 
 

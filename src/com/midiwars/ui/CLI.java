@@ -1,4 +1,4 @@
-package com.midiwars.cli;
+package com.midiwars.ui;
 
 import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.instruments.Instrument;
@@ -41,6 +41,9 @@ public class CLI {
         catch (NullPointerException e) {
             System.out.println("ERROR: Configurations file doesn't have required format.");
         }
+        catch (Instrument.InvalidInstrumentException e) {
+            System.out.println("ERROR: Default instrument listed in the configurations file is invalid.");
+        }
         catch (SAXException e) {
             System.out.println("ERROR: Couldn't parse configurations file.");
         }
@@ -66,10 +69,11 @@ public class CLI {
             }
 
             // what user wants to do
-            boolean play = false;
             String filepath = "";
+            Instrument instrument = null;
 
-            for (int i = 0; i < args.length; i++) {
+            boolean stop = false;
+            for (int i = 0; !stop && i < args.length; i++) {
 
                 String arg = args[i];
 
@@ -78,24 +82,36 @@ public class CLI {
                     case "-play": {
 
                         if (i != args.length - 1) {
-                            play = true;
                             filepath = args[i + 1];
                             // skip next arg (since it's the filepath)
                             i++;
                         } else {
-                            displayUsage();
+                            stop = true;
+                        }
+                        break;
+                    }
+
+                    case "-inst": {
+                        if (i != args.length - 1) {
+                            instrument = Instrument.newInstrument(args[i + 1]);
+                            // skip next arg (since it's the filepath)
+                            i++;
+                        } else {
+                            stop = true;
                         }
                         break;
                     }
 
                     default:
-                        displayUsage();
+                        stop = true;
                         break;
                 }
             }
 
-            if (play) {
-                play(filepath);
+            if (!stop && !filepath.isEmpty()) {
+                play(instrument, filepath);
+            } else {
+                displayUsage();
             }
         }
         catch (InvalidMidiDataException e) {
@@ -114,22 +130,31 @@ public class CLI {
      */
     private void displayUsage() {
 
-        System.out.println("Usage: java -jar MidiWars.jar -play <FILEPATH>");
+        System.out.println("Usage: java -jar MidiWars.jar -play <FILEPATH> [OPTIONS]");
+        System.out.println("\nPossible options:\n");
+        System.out.println("\t-inst <INSTRUMENT>\tInstrument to play given midi file with. Resorts back to default instrument if option is missing or instrument is invalid.");
+        System.out.println("\t                  \tInstruments: flute, harp, magbell.");
     }
 
 
     /**
      * Plays the given file.
      *
+     * @param instrument Instrument to play given file with.
      * @param filepath File to play.
      *
      * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
      */
-    private void play(String filepath) throws InvalidMidiDataException, IOException {
+    private void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
 
         try {
-            app.play(filepath);
+            System.out.println("Starting playback in...");
+            for (int i = 0; i < 5; i++) {
+                System.out.println("... " + (5 - i));
+                Thread.sleep(1000);
+            }
+            app.play(instrument, filepath);
         }
         catch (Instrument.CantPlayMidiException e) {
             displayWarnings(e.warnings);
@@ -142,8 +167,7 @@ public class CLI {
         }
     }
 
-
-    /**
+    /** TODO warnings are showing at the end and not beginning
      * Displays the given warnings to the user.
      *
      * @param warnings Warnings to display.
@@ -153,19 +177,19 @@ public class CLI {
         for (Warning warning: warnings) {
             switch (warning) {
                 case NOT_IN_RANGE:
-                    System.out.println("This midi file contains notes that this instrument can not play, therefore they will be skipped during playback.");
+                    System.out.println("WARNING: This midi file contains notes that this instrument can not play, therefore they will be skipped during playback.");
                     break;
                 case TEMPO_TOO_FAST:
-                    System.out.println("This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
+                    System.out.println("WARNING: This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
                     break;
                 case NOTES_TOO_LONG:
-                    System.out.println("This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
+                    System.out.println("WARNING: This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
                     break;
                 case PAUSES_TOO_LONG:
-                    System.out.println("This midi file contains pauses that are too long - probably due to an error in the midi file.");
+                    System.out.println("WARNING: This midi file contains pauses that are too long - probably due to an error in the midi file.");
                     break;
                 default:
-                    System.out.println("Unknown warning caused by this midi file.");
+                    System.out.println("WARNING: Unknown warning caused by this midi file.");
                     break;
             }
         }

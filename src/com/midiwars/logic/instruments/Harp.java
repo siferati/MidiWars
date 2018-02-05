@@ -8,7 +8,7 @@ public class Harp extends Instrument {
     /* --- DEFINES --- */
 
     /** {@link Instrument#name Name}. */
-    public final static String NAME = "Harp";
+    public final static String NAME = "harp";
 
     /** {@link Instrument#canHold Can Hold}. */
     public final static boolean CAN_HOLD = false;
