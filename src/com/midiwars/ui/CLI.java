@@ -3,6 +3,8 @@ package com.midiwars.ui;
 import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.Instrument.Warning;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef;
 import org.xml.sax.SAXException;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -16,20 +18,40 @@ import java.util.ArrayList;
  */
 public class CLI {
 
+    /* --- DEFINES --- */
+
+    /** Name of the window of the game. */
+    public final static String GAME_WINDOW = "Guild Wars 2";
+
+    /** Command to play a midi file. */
+    public final static String CMD_PLAY = "-play";
+
+    /** Command to check playability of a midi file. */
+    public final static String CMD_CANPLAY = "-canplay";
+
+    /** Option to not use default instrument. */
+    public final static String OPT_INST = "-inst";
+
+
     /* --- ATTRIBUTES --- */
 
     /** Midi Wars app. */
     private MidiWars app;
 
+    /** JNA mapping of User32.dll functions. */
+    private User32 user32;
+
 
     /* --- METHODS --- */
 
     /**
-     * Default Constructor.
+     * Starts the app.
      *
      * @param args List of arguments.
      */
     public CLI(String[] args) {
+
+        user32 = User32.INSTANCE;
 
         try {
             app = new MidiWars();
@@ -69,6 +91,9 @@ public class CLI {
             }
 
             // what user wants to do
+            boolean play = false;
+            boolean canPlay = false;
+
             String filepath = "";
             Instrument instrument = null;
 
@@ -79,10 +104,11 @@ public class CLI {
 
                 switch (arg) {
 
-                    case "-play": {
+                    case CMD_PLAY: {
 
                         if (i != args.length - 1) {
                             filepath = args[i + 1];
+                            play = true;
                             // skip next arg (since it's the filepath)
                             i++;
                         } else {
@@ -91,7 +117,20 @@ public class CLI {
                         break;
                     }
 
-                    case "-inst": {
+                    case CMD_CANPLAY: {
+
+                        if (i != args.length - 1) {
+                            filepath = args[i + 1];
+                            canPlay = true;
+                            // skip next arg (since it's the filepath)
+                            i++;
+                        } else {
+                            stop = true;
+                        }
+                        break;
+                    }
+
+                    case OPT_INST: {
                         if (i != args.length - 1) {
                             instrument = Instrument.newInstrument(args[i + 1]);
                             // skip next arg (since it's the filepath)
@@ -108,9 +147,13 @@ public class CLI {
                 }
             }
 
-            if (!stop && !filepath.isEmpty()) {
-                play(instrument, filepath);
-            } else {
+            if (!stop && !filepath.isEmpty() && !(play && canPlay)) {
+
+                if (play) play(instrument, filepath);
+
+                if (canPlay) canPlay(instrument, filepath);
+            }
+            else {
                 displayUsage();
             }
         }
@@ -122,6 +165,12 @@ public class CLI {
             System.out.println("Couldn't find the given MIDI file. Please provide a valid filepath.");
             displayUsage();
         }
+        catch (AWTException e) {
+            System.out.println("ERROR: Platform configuration does not allow low-level input control.");
+        }
+        catch (InterruptedException e) {
+            System.out.println("ERROR: Thread was interrupted while sleeping.");
+        }
     }
 
 
@@ -130,49 +179,32 @@ public class CLI {
      */
     private void displayUsage() {
 
-        System.out.println("Usage: java -jar MidiWars.jar -play <FILEPATH> [OPTIONS]");
-        System.out.println("\nPossible options:\n");
-        System.out.println("\t-inst <INSTRUMENT>\tInstrument to play given midi file with. Resorts back to default instrument if option is missing or instrument is invalid.");
-        System.out.println("\t                  \tInstruments: flute, harp, magbell.");
+        System.out.println("Usage: java -jar MidiWars.jar [COMMAND] [OPTIONS]\n");
+        System.out.println("Possible commands:\n");
+        System.out.println("\t-play <FILENAME>\tPlays the given MIDI file using the default instrument.");
+        System.out.println("\t      <FILENAME>\tThe name of the MIDI file to play.\n");
+        System.out.println("\t-canplay <FILENAME>\tChecks if the given MIDI file can be properly played using the default instrument.");
+        System.out.println("\t         <FILENAME>\tThe name of the MIDI file to check.\n");
+        System.out.println("Possible options:\n");
+        System.out.println("\t-inst <INSTRUMENT>\tCommands will use the given instrument instead of the default one. Resorts back to default instrument if given instrument is invalid.");
+        System.out.println("\t      <INSTRUMENT>\tPossible values: flute, harp, magbell.");
     }
 
 
     /**
-     * Plays the given file.
+     * Checks if the given midi file can be played by the given instrument.
      *
      * @param instrument Instrument to play given file with.
-     * @param filepath File to play.
+     * @param filepath Path of midi file to play.
      *
      * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
      */
-    private void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
+    private void canPlay(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
 
-        try {
-            System.out.println("Starting playback in...");
-            for (int i = 0; i < 5; i++) {
-                System.out.println("... " + (5 - i));
-                Thread.sleep(1000);
-            }
-            app.play(instrument, filepath);
-        }
-        catch (Instrument.CantPlayMidiException e) {
-            displayWarnings(e.warnings);
-        }
-        catch (InterruptedException e) {
-            System.out.println("ERROR: Thread was interrupted while sleeping.");
-        }
-        catch (AWTException e) {
-            System.out.println("ERROR: Platform configuration does not allow low-level input control.");
-        }
-    }
+        System.out.println("Checking playability...");
 
-    /** TODO warnings are showing at the end and not beginning
-     * Displays the given warnings to the user.
-     *
-     * @param warnings Warnings to display.
-     */
-    private void displayWarnings(ArrayList<Warning> warnings) {
+        ArrayList<Warning> warnings = app.canPlay(instrument, filepath);
 
         for (Warning warning: warnings) {
             switch (warning) {
@@ -192,6 +224,43 @@ public class CLI {
                     System.out.println("WARNING: Unknown warning caused by this midi file.");
                     break;
             }
+        }
+
+        if (warnings.size() == 0) {
+            System.out.println("No problems found - MIDI file can be properly played.");
+        }
+    }
+
+
+    /**
+     * Plays the given file.
+     *
+     * @param instrument Instrument to play given file with.
+     * @param filepath File to play.
+     *
+     * @throws InvalidMidiDataException Midi file is invalid.
+     * @throws IOException Can't open file.
+     */
+    private void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, InterruptedException {
+
+        // check playability
+        canPlay(instrument, filepath);
+
+        System.out.println("Starting playback in...");
+        for (int i = 0; i < 5; i++) {
+            System.out.println("... " + (5 - i));
+            Thread.sleep(1000);
+        }
+
+        // bring guild wars window to the front and start playback
+        WinDef.HWND gameWindow = user32.FindWindow(null, GAME_WINDOW);
+
+        if (gameWindow != null) {
+            user32.SetForegroundWindow(gameWindow);
+            app.play(instrument, filepath);
+        }
+        else {
+            System.out.println("ERROR: Couldn't find the game window. Please make sure the game is running and try again.");
         }
     }
 }

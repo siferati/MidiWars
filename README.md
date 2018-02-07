@@ -25,6 +25,9 @@
   * ~~Musical Harp~~
   * Musical Lute (1st of June, 2016, update?)
 * ~~CLI (config.xml)~~
-* Process targeted keyboard input
+* ~~Open game window when playback starts~~
 * In-game chat commands
+* Complete config.xml (hotkeys etc)
+* Complete CLI
+* JavaDocs
 * GUI (overlay)

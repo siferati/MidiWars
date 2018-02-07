@@ -12,6 +12,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * Represents the application itself.
@@ -50,23 +51,44 @@ public class MidiWars {
      *
      * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
-     * @throws CantPlayMidiException If the midi file can't be properly played.
      * @throws AWTException If the platform configuration does not allow low-level input control.
      */
-    public void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, CantPlayMidiException, AWTException {
+    public void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException {
+
+        // construct timeline from midi file
+        MidiTimeline midiTimeline = new MidiTimeline(midiPath + filepath);
+
+        if (instrument == null) {
+            instrument = defaultInstrument;
+        }
+
+        instrument.play(midiTimeline);
+    }
+
+
+    /**
+     * Checks if the given midi file can be played by the given instrument.
+     *
+     * @param instrument Instrument to play given file with.
+     * @param filepath Path of midi file to play.
+     *
+     * @return List of warnings.
+     *
+     * @throws InvalidMidiDataException Midi file is invalid.
+     * @throws IOException Can't open file.
+     *
+     * @see import com.midiwars.logic.instruments.Instrument.Warning
+     */
+    public ArrayList<Warning> canPlay(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
 
         // construct timeline from midi file
         MidiTimeline midiTimeline = new MidiTimeline("C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\Midi Files\\" + filepath);
 
-        // check for warnings
-        try {
-            if (instrument == null) {
-                instrument = defaultInstrument;
-            }
-            instrument.canPlay(midiTimeline);
-        } finally {
-            instrument.play(midiTimeline);
+        if (instrument == null) {
+            instrument = defaultInstrument;
         }
+
+        return instrument.canPlay(midiTimeline);
     }
 
 
@@ -91,7 +113,7 @@ public class MidiWars {
         midiPath = doc.getDocumentElement().getElementsByTagName("midipath").item(0).getTextContent();
         defaultInstrument = Instrument.newInstrument(doc.getDocumentElement().getElementsByTagName("instrument").item(0).getTextContent());
 
-        /* TODO
+        /* TODO if text is null or incorrect, throw exception
         File path = new File(midiPath);
         if (!path.exists() || !path.isDirectory()) {
             throw new

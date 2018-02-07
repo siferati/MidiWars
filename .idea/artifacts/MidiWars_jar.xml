@@ -3,6 +3,8 @@
     <output-path>$PROJECT_DIR$/out/artifacts/MidiWars_jar</output-path>
     <root id="archive" name="MidiWars.jar">
       <element id="module-output" name="MidiWars" />
+      <element id="library" level="project" name="jna-4.5.1" />
+      <element id="library" level="project" name="jna-platform-4.5.1" />
     </root>
   </artifact>
 </component>

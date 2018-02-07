@@ -35,21 +35,6 @@ public abstract class Instrument {
 
 
     /**
-     * Thrown when the given midi file can't be properly played.
-     *
-     * @see Warning
-     */
-    public static class CantPlayMidiException extends Exception {
-
-        public ArrayList<Warning> warnings;
-        public CantPlayMidiException(ArrayList<Warning> warnings) {
-            super();
-            this.warnings = warnings;
-        }
-    }
-
-
-    /**
      * Thrown when the default instrument in the configurations file is invalid.
      */
     public static class InvalidInstrumentException extends Exception {
@@ -280,11 +265,9 @@ public abstract class Instrument {
      *
      * @param midiTimeline Timeline to assess.
      *
-     * @return True if there were no warnings.
-     *
-     * @throws CantPlayMidiException If the timeline can't be properly played.
+     * @return List of warnings caused by given timeline.
      */
-    public boolean canPlay(MidiTimeline midiTimeline) throws CantPlayMidiException {
+    public ArrayList<Warning> canPlay(MidiTimeline midiTimeline) {
 
         ArrayList<Warning> warnings = new ArrayList<>();
 
@@ -337,11 +320,7 @@ public abstract class Instrument {
         previousKeybarChange = -1;
         activeKeybarIndex = idleKeybarIndex;
 
-        if (warnings.size() > 0) {
-            throw new CantPlayMidiException(warnings);
-        } else {
-            return true;
-        }
+        return warnings;
     }
 
 
