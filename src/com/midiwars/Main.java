@@ -1,6 +1,7 @@
 package com.midiwars;
 
 import com.midiwars.ui.CLI;
+import com.midiwars.ui.GCI;
 
 /**
  * Entry point for the application.
@@ -14,6 +15,8 @@ public class Main {
      */
     public static void main(String[] args) {
 
-        new CLI(args);
+        //new CLI(args);
+
+        new GCI();
     }
 }
