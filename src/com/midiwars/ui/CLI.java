@@ -3,8 +3,6 @@ package com.midiwars.ui;
 import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.Instrument.Warning;
-import com.sun.jna.platform.win32.User32;
-import com.sun.jna.platform.win32.WinDef;
 import org.xml.sax.SAXException;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -13,15 +11,12 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/**
+/** TODO exception handling structure.
  * Command line interface.
  */
 public class CLI {
 
     /* --- DEFINES --- */
-
-    /** Name of the window of the game. */
-    public final static String GAME_WINDOW = "Guild Wars 2";
 
     /** Command to play a midi file. */
     public final static String CMD_PLAY = "-play";
@@ -38,9 +33,6 @@ public class CLI {
     /** Midi Wars app. */
     private MidiWars app;
 
-    /** JNA mapping of User32.dll functions. */
-    private User32 user32;
-
 
     /* --- METHODS --- */
 
@@ -51,26 +43,24 @@ public class CLI {
      */
     public CLI(String[] args) {
 
-        user32 = User32.INSTANCE;
-
         try {
             app = new MidiWars();
             parse(args);
         }
         catch (IOException e) {
-            System.out.println("ERROR: Configurations file is missing.");
+            System.out.println("\nERROR: Configurations file is missing.");
         }
         catch (NullPointerException e) {
-            System.out.println("ERROR: Configurations file doesn't have required format.");
+            System.out.println("\nERROR: Configurations file doesn't have required format.");
         }
         catch (Instrument.InvalidInstrumentException e) {
-            System.out.println("ERROR: Default instrument listed in the configurations file is invalid.");
+            System.out.println("\nERROR: Default instrument listed in the configurations file is invalid.");
         }
         catch (SAXException e) {
-            System.out.println("ERROR: Couldn't parse configurations file.");
+            System.out.println("\nERROR: Couldn't parse configurations file.");
         }
         catch (ParserConfigurationException e) {
-            System.out.println("ERROR: There was a configuration error within the parser.");
+            System.out.println("\nERROR: There was a configuration error within the parser.");
         }
     }
 
@@ -158,18 +148,21 @@ public class CLI {
             }
         }
         catch (InvalidMidiDataException e) {
-            System.out.println("Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
+            System.out.println("\nInvalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
             displayUsage();
         }
         catch (IOException e) {
-            System.out.println("Couldn't find the given MIDI file. Please provide a valid filepath.");
+            System.out.println("\nCouldn't find the given MIDI file. Please provide a valid filepath.");
             displayUsage();
         }
         catch (AWTException e) {
-            System.out.println("ERROR: Platform configuration does not allow low-level input control.");
+            System.out.println("\nERROR: Platform configuration does not allow low-level input control.");
         }
         catch (InterruptedException e) {
-            System.out.println("ERROR: Thread was interrupted while sleeping.");
+            System.out.println("\nERROR: Thread was interrupted while sleeping.");
+        }
+        catch (MidiWars.GameNotRunningException e){
+            System.out.println("\nERROR: Couldn't find the game window. Please make sure the game is running and try again.");
         }
     }
 
@@ -179,15 +172,13 @@ public class CLI {
      */
     private void displayUsage() {
 
-        System.out.println("Usage: java -jar MidiWars.jar [COMMAND] [OPTIONS]\n");
-        System.out.println("Possible commands:\n");
+        System.out.println("\nUsage: java -jar MidiWars.jar [COMMAND] [OPTIONS]");
+        System.out.println("\nPossible commands:\n");
         System.out.println("\t-play <FILENAME>\tPlays the given MIDI file using the default instrument.");
-        System.out.println("\t      <FILENAME>\tThe name of the MIDI file to play.\n");
         System.out.println("\t-canplay <FILENAME>\tChecks if the given MIDI file can be properly played using the default instrument.");
-        System.out.println("\t         <FILENAME>\tThe name of the MIDI file to check.\n");
-        System.out.println("Possible options:\n");
+        System.out.println("\nPossible options:\n");
         System.out.println("\t-inst <INSTRUMENT>\tCommands will use the given instrument instead of the default one. Resorts back to default instrument if given instrument is invalid.");
-        System.out.println("\t      <INSTRUMENT>\tPossible values: flute, harp, magbell.");
+        System.out.println("\t                  \tPossible values: flute, harp, magbell.");
     }
 
 
@@ -202,32 +193,32 @@ public class CLI {
      */
     private void canPlay(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
 
-        System.out.println("Checking playability...");
+        System.out.println("\nChecking playability...");
 
         ArrayList<Warning> warnings = app.canPlay(instrument, filepath);
 
         for (Warning warning: warnings) {
             switch (warning) {
                 case NOT_IN_RANGE:
-                    System.out.println("WARNING: This midi file contains notes that this instrument can not play, therefore they will be skipped during playback.");
+                    System.out.println("\nWARNING: This midi file contains notes that this instrument can not play, therefore they will be skipped during playback.");
                     break;
                 case TEMPO_TOO_FAST:
-                    System.out.println("WARNING: This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
+                    System.out.println("\nWARNING: This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
                     break;
                 case NOTES_TOO_LONG:
-                    System.out.println("WARNING: This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
+                    System.out.println("\nWARNING: This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
                     break;
                 case PAUSES_TOO_LONG:
-                    System.out.println("WARNING: This midi file contains pauses that are too long - probably due to an error in the midi file.");
+                    System.out.println("\nWARNING: This midi file contains pauses that are too long - probably due to an error in the midi file.");
                     break;
                 default:
-                    System.out.println("WARNING: Unknown warning caused by this midi file.");
+                    System.out.println("\nWARNING: Unknown warning caused by this midi file.");
                     break;
             }
         }
 
         if (warnings.size() == 0) {
-            System.out.println("No problems found - MIDI file can be properly played.");
+            System.out.println("\nNo problems found. MIDI file is ready for playback.");
         }
     }
 
@@ -241,26 +232,19 @@ public class CLI {
      * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
      */
-    private void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, InterruptedException {
+    private void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, InterruptedException, MidiWars.GameNotRunningException {
 
         // check playability
         canPlay(instrument, filepath);
 
-        System.out.println("Starting playback in...");
+        System.out.println("\nStarting playback in...");
         for (int i = 0; i < 5; i++) {
             System.out.println("... " + (5 - i));
             Thread.sleep(1000);
         }
 
-        // bring guild wars window to the front and start playback
-        WinDef.HWND gameWindow = user32.FindWindow(null, GAME_WINDOW);
+        app.play(instrument, filepath);
 
-        if (gameWindow != null) {
-            user32.SetForegroundWindow(gameWindow);
-            app.play(instrument, filepath);
-        }
-        else {
-            System.out.println("ERROR: Couldn't find the game window. Please make sure the game is running and try again.");
-        }
+
     }
 }
