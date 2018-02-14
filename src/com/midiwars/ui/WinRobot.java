@@ -1,7 +1,7 @@
-package com.midiwars.logic;
+package com.midiwars.ui;
 
+import com.midiwars.jna.MyUser32;
 import com.sun.jna.platform.win32.BaseTSD.ULONG_PTR;
-import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.WORD;
 import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinUser.INPUT;
@@ -17,7 +17,7 @@ public class WinRobot {
     /* --- ATTRIBUTES --- */
 
     /** User32.dll. */
-    private final User32 user32;
+    private final MyUser32 user32;
 
 
     /* --- METHODS --- */
@@ -26,7 +26,7 @@ public class WinRobot {
      * Creates a new WinRobot object.
      */
     public WinRobot() {
-        user32 = User32.INSTANCE;
+        user32 = MyUser32.INSTANCE;
     }
 
 

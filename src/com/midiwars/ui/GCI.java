@@ -2,9 +2,11 @@ package com.midiwars.ui;
 
 import static com.sun.jna.Pointer.nativeValue;
 import static com.sun.jna.platform.win32.WinUser.*;
+import static java.util.Locale.ENGLISH;
 
-import com.midiwars.logic.WinRobot;
-import com.sun.jna.platform.win32.User32;
+import com.midiwars.jna.MyUser32;
+import com.midiwars.logic.MidiWars;
+import com.midiwars.logic.instruments.Instrument;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
@@ -12,12 +14,19 @@ import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.HHOOK;
 import com.sun.jna.platform.win32.WinUser.KBDLLHOOKSTRUCT;
 import com.sun.jna.platform.win32.WinUser.LowLevelKeyboardProc;
+import org.xml.sax.SAXException;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Game Chat Interface.
  */
-public class GCI {
+public class GCI implements UserInterface {
 
     /**
      * Represents a synchronized boolean,
@@ -103,7 +112,7 @@ public class GCI {
 
             // message loop
             MSG msg = new MSG();
-            while(user32.GetMessage(msg, null, 0, 0) > 0) {
+            while(!quit && user32.GetMessage(msg, null, 0, 0) > 0) {
 
                 user32.TranslateMessage(msg);
                 user32.DispatchMessage(msg);
@@ -111,6 +120,8 @@ public class GCI {
 
             // free system resources
             user32.UnhookWindowsHookEx(hHook);
+
+            System.out.println("debug: MessageLoop exited.");
         }
 
     } // MessageLoop
@@ -163,14 +174,15 @@ public class GCI {
                             openChatHeldDown = true;
                         }
 
-                        // if chat is no longer opened, echo
+                        // if chat is no longer opened
                         if (!open.get()) {
-                            System.out.println("debug: CLOSED");
+                            System.out.println("debug: CHAT CLOSED!");
+                            // TODO cli parser
                             synchronized (kbdEvents) {
-                                echo();
+                                parse();
                             }
                         } else {
-                            System.out.println("debug: OPEN");
+                            System.out.println("debug: CHAT OPEN!");
                         }
                     }
                     else if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
@@ -215,9 +227,17 @@ public class GCI {
 
     /* --- DEFINES --- */
 
+    /** Keybind to open in-game chat. */
     public static final int OPEN_CHAT = 0x0D;
 
+
     /* --- ATTRIBUTES --- */
+
+    /** True when the user asks to quit the program, False otherwise. */
+    private volatile boolean quit;
+
+    /** Midi Wars app. */
+    private MidiWars app;
 
     /** True if chat is opened, False otherwise. */
     private volatile SyncBoolean open;
@@ -232,10 +252,10 @@ public class GCI {
     private HHOOK hHook;
 
     /** Callback for keyboard events. */
-    private LowLevelKeyboardProc keyboardProc;
+    private final LowLevelKeyboardProc keyboardProc;
 
     /** Listener of the in-game chat. */
-    private Thread chatListener;
+    private final Thread chatListener;
 
     /** List of keyboard events detected while chat was active. */
     private final ArrayList<KbdEvent> kbdEvents;
@@ -244,14 +264,24 @@ public class GCI {
     private WinRobot robot;
 
     /** DLL. */
-    private final User32 user32;
+    private final MyUser32 user32;
 
 
     /* --- METHODS --- */
 
+    /**
+     * Creates a new GCI object.
+     */
     public GCI() {
 
+        try {
+            app = new MidiWars();
+        } catch (IOException | SAXException | ParserConfigurationException | Instrument.InvalidInstrumentException e) {
+            // TODO
+        }
+
         // inits
+        quit = false;
         open = new SyncBoolean(false);
         openChatHeldDown = false;
         echoing = false;
@@ -259,7 +289,7 @@ public class GCI {
         robot = new WinRobot();
 
         // dll
-        user32 = User32.INSTANCE;
+        user32 = MyUser32.INSTANCE;
 
         // keyboard procedure
         keyboardProc = new KeyboardProc();
@@ -271,8 +301,50 @@ public class GCI {
 
 
     /**
-     * Echoes every keyboard event stored in {@link #kbdEvents}
-     * and clears the list afterwards.
+     * Creates a command string from the stored keyboard events
+     * and parses it, in order to decide what to do.
+     * Clears the list afterwards.
+     */
+    private void parse() {
+
+        // user typed command
+        StringBuilder cmdBuilder = new StringBuilder();
+
+        for (KbdEvent e: kbdEvents) {
+
+            int msg = e.msg;
+            int vkCode = e.vkCode;
+
+            // only interested in keydown events
+            if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+
+                // translate virtual-key code to char
+                char c = (char) user32.MapVirtualKey(new UINT(vkCode), new UINT(2)).intValue();
+
+                cmdBuilder.append(c);
+            }
+        }
+
+        String cmd = cmdBuilder.toString();
+
+        kbdEvents.clear();
+
+        cmd = cmd.toLowerCase(ENGLISH);
+        System.out.println("debug: CMD: " + cmd);
+
+        // get command arguments
+        String[] args = cmd.split("\\s+");
+        System.out.println("debug: ARGS: " + Arrays.toString(args));
+
+        // parse arguments TODO doesn't quit.
+        Parser parser = new Parser(this);
+        parser.parse(args);
+    }
+
+
+    /**
+     * Echoes every keyboard event stored in {@link #kbdEvents}.
+     * Clears the list afterwards.
      */
     private void echo() {
 
@@ -309,9 +381,34 @@ public class GCI {
         try {
             Thread.sleep(20);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            // TODO
         }
 
         echoing = false;
+    }
+
+    @Override
+    public void displayUsage() {
+        // TODO
+    }
+
+    @Override
+    public void play(Instrument instrument, String filename) {
+        try {
+            app.play(instrument, filename);
+        } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException e) {
+            // TODO
+        }
+    }
+
+    @Override
+    public void canPlay(Instrument instrument, String filename) {
+        // TODO
+    }
+
+    @Override
+    public void quit() {
+        System.out.println("debug: Entered quit().");
+        quit = true;
     }
 }

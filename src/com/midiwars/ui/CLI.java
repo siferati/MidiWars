@@ -11,22 +11,10 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/** TODO exception handling structure.
+/**
  * Command line interface.
  */
-public class CLI {
-
-    /* --- DEFINES --- */
-
-    /** Command to play a midi file. */
-    public final static String CMD_PLAY = "-play";
-
-    /** Command to check playability of a midi file. */
-    public final static String CMD_CANPLAY = "-canplay";
-
-    /** Option to not use default instrument. */
-    public final static String OPT_INST = "-inst";
-
+public class CLI implements UserInterface {
 
     /* --- ATTRIBUTES --- */
 
@@ -37,15 +25,12 @@ public class CLI {
     /* --- METHODS --- */
 
     /**
-     * Starts the app.
-     *
-     * @param args List of arguments.
+     * Creates a new CLI object.
      */
-    public CLI(String[] args) {
+    public CLI() {
 
         try {
             app = new MidiWars();
-            parse(args);
         }
         catch (IOException e) {
             System.out.println("\nERROR: Configurations file is missing.");
@@ -65,112 +50,8 @@ public class CLI {
     }
 
 
-    /**
-     * Parses the given command line arguments
-     * and decides what to do.
-     *
-     * @param args List of arguments.
-     */
-    private void parse(String[] args) {
-
-        try {
-
-            if (args.length == 0) {
-                displayUsage();
-                return;
-            }
-
-            // what user wants to do
-            boolean play = false;
-            boolean canPlay = false;
-
-            String filepath = "";
-            Instrument instrument = null;
-
-            boolean stop = false;
-            for (int i = 0; !stop && i < args.length; i++) {
-
-                String arg = args[i];
-
-                switch (arg) {
-
-                    case CMD_PLAY: {
-
-                        if (i != args.length - 1) {
-                            filepath = args[i + 1];
-                            play = true;
-                            // skip next arg (since it's the filepath)
-                            i++;
-                        } else {
-                            stop = true;
-                        }
-                        break;
-                    }
-
-                    case CMD_CANPLAY: {
-
-                        if (i != args.length - 1) {
-                            filepath = args[i + 1];
-                            canPlay = true;
-                            // skip next arg (since it's the filepath)
-                            i++;
-                        } else {
-                            stop = true;
-                        }
-                        break;
-                    }
-
-                    case OPT_INST: {
-                        if (i != args.length - 1) {
-                            instrument = Instrument.newInstrument(args[i + 1]);
-                            // skip next arg (since it's the filepath)
-                            i++;
-                        } else {
-                            stop = true;
-                        }
-                        break;
-                    }
-
-                    default:
-                        stop = true;
-                        break;
-                }
-            }
-
-            if (!stop && !filepath.isEmpty() && !(play && canPlay)) {
-
-                if (play) play(instrument, filepath);
-
-                if (canPlay) canPlay(instrument, filepath);
-            }
-            else {
-                displayUsage();
-            }
-        }
-        catch (InvalidMidiDataException e) {
-            System.out.println("\nInvalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
-            displayUsage();
-        }
-        catch (IOException e) {
-            System.out.println("\nCouldn't find the given MIDI file. Please provide a valid filepath.");
-            displayUsage();
-        }
-        catch (AWTException e) {
-            System.out.println("\nERROR: Platform configuration does not allow low-level input control.");
-        }
-        catch (InterruptedException e) {
-            System.out.println("\nERROR: Thread was interrupted while sleeping.");
-        }
-        catch (MidiWars.GameNotRunningException e){
-            System.out.println("\nERROR: Couldn't find the game window. Please make sure the game is running and try again.");
-        }
-    }
-
-
-    /**
-     * Prints to the screen the usage information.
-     */
-    private void displayUsage() {
+    @Override
+    public void displayUsage() {
 
         System.out.println("\nUsage: java -jar MidiWars.jar [COMMAND] [OPTIONS]");
         System.out.println("\nPossible commands:\n");
@@ -182,69 +63,86 @@ public class CLI {
     }
 
 
-    /**
-     * Checks if the given midi file can be played by the given instrument.
-     *
-     * @param instrument Instrument to play given file with.
-     * @param filepath Path of midi file to play.
-     *
-     * @throws InvalidMidiDataException Midi file is invalid.
-     * @throws IOException Can't open file.
-     */
-    private void canPlay(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
+    @Override
+    public void canPlay(Instrument instrument, String filename) {
 
-        System.out.println("\nChecking playability...");
+        try {
 
-        ArrayList<Warning> warnings = app.canPlay(instrument, filepath);
+            System.out.println("\nChecking playability...");
 
-        for (Warning warning: warnings) {
-            switch (warning) {
-                case NOT_IN_RANGE:
-                    System.out.println("\nWARNING: This midi file contains notes that this instrument can not play, therefore they will be skipped during playback.");
-                    break;
-                case TEMPO_TOO_FAST:
-                    System.out.println("\nWARNING: This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
-                    break;
-                case NOTES_TOO_LONG:
-                    System.out.println("\nWARNING: This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
-                    break;
-                case PAUSES_TOO_LONG:
-                    System.out.println("\nWARNING: This midi file contains pauses that are too long - probably due to an error in the midi file.");
-                    break;
-                default:
-                    System.out.println("\nWARNING: Unknown warning caused by this midi file.");
-                    break;
+            ArrayList<Warning> warnings = app.canPlay(instrument, filename);
+
+            for (Warning warning: warnings) {
+                switch (warning) {
+                    case NOT_IN_RANGE:
+                        System.out.println("\nWARNING: This midi file contains notes that this instrument can not play, therefore they will be skipped during playback.");
+                        break;
+                    case TEMPO_TOO_FAST:
+                        System.out.println("\nWARNING: This midi file's tempo is too fast - playback will probably be hindered. Lower the tempo for smoother playback.");
+                        break;
+                    case NOTES_TOO_LONG:
+                        System.out.println("\nWARNING: This midi file contains notes that are too long - they will probably be played twice. Lower their duration for smoother playback.");
+                        break;
+                    case PAUSES_TOO_LONG:
+                        System.out.println("\nWARNING: This midi file contains pauses that are too long - probably due to an error in the midi file.");
+                        break;
+                    default:
+                        System.out.println("\nWARNING: Unknown warning caused by this midi file.");
+                        break;
+                }
+            }
+
+            if (warnings.size() == 0) {
+                System.out.println("\nNo problems found. MIDI file is ready for playback.");
             }
         }
-
-        if (warnings.size() == 0) {
-            System.out.println("\nNo problems found. MIDI file is ready for playback.");
+        catch (InvalidMidiDataException e) {
+            System.out.println("\nInvalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
+            displayUsage();
+        }
+        catch (IOException e) {
+            System.out.println("\nCouldn't find the given MIDI file. Please provide a valid filename.");
+            displayUsage();
         }
     }
 
 
-    /**
-     * Plays the given file.
-     *
-     * @param instrument Instrument to play given file with.
-     * @param filepath File to play.
-     *
-     * @throws InvalidMidiDataException Midi file is invalid.
-     * @throws IOException Can't open file.
-     */
-    private void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, InterruptedException, MidiWars.GameNotRunningException {
+    @Override
+    public void play(Instrument instrument, String filename) {
 
-        // check playability
-        canPlay(instrument, filepath);
+        try {
+            // check playability
+            canPlay(instrument, filename);
 
-        System.out.println("\nStarting playback in...");
-        for (int i = 0; i < 5; i++) {
-            System.out.println("... " + (5 - i));
-            Thread.sleep(1000);
+            System.out.println("\nStarting playback in...");
+            for (int i = 0; i < 5; i++) {
+                System.out.println("... " + (5 - i));
+                Thread.sleep(1000);
+            }
+
+            app.play(instrument, filename);
         }
+        catch (InterruptedException e) {
+            System.out.println("\nERROR: Thread was interrupted while sleeping.");
+        }
+        catch (AWTException e) {
+            System.out.println("\nERROR: Platform configuration does not allow low-level input control.");
+        }
+        catch (MidiWars.GameNotRunningException e){
+            System.out.println("\nERROR: Couldn't find the game window. Please make sure the game is running and try again.");
+        }
+        catch (InvalidMidiDataException e) {
+            System.out.println("\nInvalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
+            displayUsage();
+        }
+        catch (IOException e) {
+            System.out.println("\nCouldn't find the given MIDI file. Please provide a valid filename.");
+            displayUsage();
+        }
+    }
 
-        app.play(instrument, filepath);
-
-
+    @Override
+    public void quit() {
+        System.out.println("Program exited.");
     }
 }
