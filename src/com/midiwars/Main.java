@@ -3,6 +3,8 @@ package com.midiwars;
 import com.midiwars.ui.CLI;
 import com.midiwars.ui.GCI;
 
+import java.awt.*;
+
 /**
  * Entry point for the application.
  */
