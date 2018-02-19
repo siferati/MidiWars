@@ -21,12 +21,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Game Chat Interface.
  */
-public class GCI implements UserInterface {
+public class GCI implements UserInterface, LowLevelKeyboardProc {
 
     /**
      * Represents a synchronized boolean,
@@ -37,6 +36,7 @@ public class GCI implements UserInterface {
         /** Primitive boolean value. */
         private boolean value;
 
+
         /**
          * Creates a new SyncBoolean object.
          *
@@ -45,6 +45,7 @@ public class GCI implements UserInterface {
         public SyncBoolean(boolean value) {
             this.value = value;
         }
+
 
         /**
          * Returns the current value.
@@ -55,6 +56,7 @@ public class GCI implements UserInterface {
             return value;
         }
 
+
         /**
          * Sets the current value to a new one.
          *
@@ -63,6 +65,7 @@ public class GCI implements UserInterface {
         public synchronized void set(boolean newValue) {
             value = newValue;
         }
+
 
         /**
          * Swaps the current value.
@@ -85,6 +88,7 @@ public class GCI implements UserInterface {
         /** Virtual-key code. */
         public int vkCode;
 
+
         /**
          * Creates a new KbdEvent object.
          *
@@ -100,129 +104,73 @@ public class GCI implements UserInterface {
 
 
     /**
-     * Implementation of the message loop to listen to in-game key presses.
+     * Implementation of the handling of a keyboard event.
      */
-    private class MessageLoop implements Runnable {
+    private class KbdEventHandler implements Runnable {
+
+        /** Keyboard message. */
+        private final int msg;
+
+        /** Virtual-key code. */
+        private final int vkCode;
+
+
+        /**
+         * Creates a new KbdEventHandler object.
+         *
+         * @param msg    Message received.
+         * @param vkCode Virtual-key code of key that generated the event.
+         */
+        public KbdEventHandler(int msg, int vkCode) {
+            this.msg = msg;
+            this.vkCode = vkCode;
+        }
+
 
         @Override
         public void run() {
 
-            // install hook and get its handle
-            hHook = user32.SetWindowsHookEx(WH_KEYBOARD_LL, keyboardProc, null, 0);
-
-            // message loop
-            MSG msg = new MSG();
-            while(!quit && user32.GetMessage(msg, null, 0, 0) > 0) {
-
-                user32.TranslateMessage(msg);
-                user32.DispatchMessage(msg);
+            // prevent echoes from getting caught in the message loop
+            if (echoing) {
+                return;
             }
 
-            // free system resources
-            user32.UnhookWindowsHookEx(hHook);
+            // (de)activate chat
+            if (vkCode == OPEN_CHAT) {
+                if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
 
-            System.out.println("debug: MessageLoop exited.");
+                    if (openChatHeldDown) {
+                        // chat closes if key is held down
+                        open.set(false);
+                    } else {
+                        open.swap();
+                        openChatHeldDown = true;
+                    }
+
+                    // if chat is no longer opened
+                    if (!open.get()) {
+                        System.out.println("debug: CHAT CLOSED!");
+                        synchronized (kbdEvents) {
+                            parse();
+                        }
+                    } else {
+                        System.out.println("debug: CHAT OPEN!");
+                    }
+                }
+                else if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
+                    openChatHeldDown = false;
+                }
+            }
+            // other keys
+            else if (open.get()) {
+                synchronized (kbdEvents) {
+                    // TODO construct string every time a new event is added (create a cursor to handle key presses)
+                    kbdEvents.add(new KbdEvent(msg, vkCode));
+                }
+            }
         }
 
-    } // MessageLoop
-
-
-    /**
-     * Implementation of the callback for keyboard events.
-     */
-    private class KeyboardProc implements LowLevelKeyboardProc {
-
-        /**
-         * Implementation of the handling of a keyboard event.
-         */
-        private class KbdEventHandler implements Runnable {
-
-            /** Keyboard message. */
-            private final int msg;
-
-            /** Virtual-key code. */
-            private final int vkCode;
-
-            /**
-             * Creates a new KbdEventHandler object.
-             *
-             * @param msg    Message received.
-             * @param vkCode Virtual-key code of key that generated the event.
-             */
-            public KbdEventHandler(int msg, int vkCode) {
-                this.msg = msg;
-                this.vkCode = vkCode;
-            }
-
-            @Override
-            public void run() {
-
-                // prevent echoes from getting caught in the message loop
-                if (echoing) {
-                    return;
-                }
-
-                // (de)activate chat
-                if (vkCode == OPEN_CHAT) {
-                    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
-
-                        if (openChatHeldDown) {
-                            // chat closes if key is held down
-                            open.set(false);
-                        } else {
-                            open.swap();
-                            openChatHeldDown = true;
-                        }
-
-                        // if chat is no longer opened
-                        if (!open.get()) {
-                            System.out.println("debug: CHAT CLOSED!");
-                            // TODO cli parser
-                            synchronized (kbdEvents) {
-                                parse();
-                            }
-                        } else {
-                            System.out.println("debug: CHAT OPEN!");
-                        }
-                    }
-                    else if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
-                        openChatHeldDown = false;
-                    }
-                }
-                // other keys
-                else if (open.get()) {
-                    synchronized (kbdEvents) {
-                        kbdEvents.add(new KbdEvent(msg, vkCode));
-                    }
-                }
-            }
-
-        } // KbdEventHandler
-
-
-        @Override
-        public LRESULT callback(int nCode, WPARAM wParam, KBDLLHOOKSTRUCT kbdStruct) {
-
-            // lparam object
-            LPARAM lParam = new LPARAM(nativeValue(kbdStruct.getPointer()));
-
-            // no further processing allowed
-            if (nCode < 0) {
-                return user32.CallNextHookEx(null, nCode, wParam, lParam);
-            }
-
-            // get message and virtual-key code
-            int msg = wParam.intValue();
-            int vkCode = kbdStruct.vkCode;
-
-            // delegate message processing
-            Thread kbdEventHandler = new Thread(new KbdEventHandler(msg, vkCode));
-            kbdEventHandler.start();
-
-            return user32.CallNextHookEx(null, nCode, wParam, lParam);
-        }
-
-    } // KeyboardProc
+    } // KbdEventHandler
 
 
     /* --- DEFINES --- */
@@ -250,12 +198,6 @@ public class GCI implements UserInterface {
 
     /** Handle to the hook procedure. */
     private HHOOK hHook;
-
-    /** Callback for keyboard events. */
-    private final LowLevelKeyboardProc keyboardProc;
-
-    /** Listener of the in-game chat. */
-    private final Thread chatListener;
 
     /** List of keyboard events detected while chat was active. */
     private final ArrayList<KbdEvent> kbdEvents;
@@ -291,12 +233,61 @@ public class GCI implements UserInterface {
         // dll
         user32 = MyUser32.INSTANCE;
 
-        // keyboard procedure
-        keyboardProc = new KeyboardProc();
+        // install hook and get its handle
+        hHook = user32.SetWindowsHookEx(WH_KEYBOARD_LL, this, null, 0);
 
-        // create and start the chat listener
-        chatListener = new Thread(new MessageLoop());
-        chatListener.start();
+        // program exit
+        new Thread(() -> {
+
+            // wait for user to quit the program
+            while (!quit) Thread.onSpinWait();
+
+            // free system resources
+            user32.UnhookWindowsHookEx(hHook);
+
+            System.exit(0);
+
+        }).start();
+
+        // --- NOTE ---
+        // user32.GetMessage() never returns, causing the thread to block.
+        // because of this, program exit happens in the above thread.
+
+        // message loop
+        MSG msg = new MSG();
+        while(user32.GetMessage(msg, null, 0, 0) > 0) {
+
+            user32.TranslateMessage(msg);
+            user32.DispatchMessage(msg);
+        }
+
+        // free system resources
+        user32.UnhookWindowsHookEx(hHook);
+
+        System.exit(0);
+    }
+
+
+    @Override
+    public LRESULT callback(int nCode, WPARAM wParam, KBDLLHOOKSTRUCT kbdStruct) {
+
+        // lparam object
+        LPARAM lParam = new LPARAM(nativeValue(kbdStruct.getPointer()));
+
+        // no further processing allowed
+        if (nCode < 0) {
+            return user32.CallNextHookEx(null, nCode, wParam, lParam);
+        }
+
+        // get message and virtual-key code
+        int msg = wParam.intValue();
+        int vkCode = kbdStruct.vkCode;
+
+        // delegate message processing
+        Thread kbdEventHandler = new Thread(new KbdEventHandler(msg, vkCode));
+        kbdEventHandler.start();
+
+        return user32.CallNextHookEx(null, nCode, wParam, lParam);
     }
 
 
@@ -334,9 +325,8 @@ public class GCI implements UserInterface {
 
         // get command arguments
         String[] args = cmd.split("\\s+");
-        System.out.println("debug: ARGS: " + Arrays.toString(args));
 
-        // parse arguments TODO doesn't quit.
+        // parse arguments
         Parser parser = new Parser(this);
         parser.parse(args);
     }
@@ -387,10 +377,12 @@ public class GCI implements UserInterface {
         echoing = false;
     }
 
+
     @Override
     public void displayUsage() {
         // TODO
     }
+
 
     @Override
     public void play(Instrument instrument, String filename) {
@@ -401,10 +393,12 @@ public class GCI implements UserInterface {
         }
     }
 
+
     @Override
     public void canPlay(Instrument instrument, String filename) {
         // TODO
     }
+
 
     @Override
     public void quit() {
