@@ -1,4 +1,4 @@
-package com.midiwars.ui;
+package com.midiwars.util;
 
 import com.midiwars.jna.MyUser32;
 import com.sun.jna.platform.win32.BaseTSD.ULONG_PTR;

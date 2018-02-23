@@ -7,6 +7,8 @@ import static java.util.Locale.ENGLISH;
 import com.midiwars.jna.MyUser32;
 import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.instruments.Instrument;
+import com.midiwars.util.SyncBoolean;
+import com.midiwars.util.WinRobot;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
@@ -26,56 +28,6 @@ import java.util.ArrayList;
  * Game Chat Interface.
  */
 public class GCI implements UserInterface, LowLevelKeyboardProc {
-
-    /**
-     * Represents a synchronized boolean,
-     * allowing for atomic get(), set() and swap().
-     */
-    private class SyncBoolean {
-
-        /** Primitive boolean value. */
-        private boolean value;
-
-
-        /**
-         * Creates a new SyncBoolean object.
-         *
-         * @param value Initial value.
-         */
-        public SyncBoolean(boolean value) {
-            this.value = value;
-        }
-
-
-        /**
-         * Returns the current value.
-         *
-         * @return Current value.
-         */
-        public synchronized boolean get() {
-            return value;
-        }
-
-
-        /**
-         * Sets the current value to a new one.
-         *
-         * @param newValue New value.
-         */
-        public synchronized void set(boolean newValue) {
-            value = newValue;
-        }
-
-
-        /**
-         * Swaps the current value.
-         */
-        public synchronized void swap() {
-            value = !value;
-        }
-
-    } // SyncBoolean
-
 
     /**
      * 'C++ Struct' that represents a keyboard event.
