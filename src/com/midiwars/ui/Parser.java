@@ -2,7 +2,7 @@ package com.midiwars.ui;
 
 import com.midiwars.logic.instruments.Instrument;
 
-/**
+/** TODO refactor this entire class to a method parse() under userIntarface (make this interface an abstact class instead)
  * Parses the commands inserted either through the CLI or the GCI.
  */
 public class Parser {

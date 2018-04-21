@@ -55,8 +55,8 @@ public class CLI implements UserInterface {
 
         System.out.println("\nUsage: java -jar MidiWars.jar [COMMAND] [OPTIONS]");
         System.out.println("\nPossible commands:\n");
-        System.out.println("\t-play <FILENAME>\tPlays the given MIDI file using the default instrument.");
-        System.out.println("\t-canplay <FILENAME>\tChecks if the given MIDI file can be properly played using the default instrument.");
+        System.out.println("\t/play <FILENAME>\tPlays the given MIDI file using the default instrument.");
+        System.out.println("\t/canplay <FILENAME>\tChecks if the given MIDI file can be properly played using the default instrument.");
         System.out.println("\nPossible options:\n");
         System.out.println("\t-inst <INSTRUMENT>\tCommands will use the given instrument instead of the default one. Resorts back to default instrument if given instrument is invalid.");
         System.out.println("\t                  \tPossible values: flute, harp, magbell.");

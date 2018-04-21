@@ -24,7 +24,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/**
+/** TODO refactor of elements of this class to Chat class.
  * Game Chat Interface.
  */
 public class GCI implements UserInterface, LowLevelKeyboardProc {
@@ -116,7 +116,6 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
             // other keys
             else if (open.get()) {
                 synchronized (kbdEvents) {
-                    // TODO construct string every time a new event is added (create a cursor to handle key presses)
                     kbdEvents.add(new KbdEvent(msg, vkCode));
                 }
             }
@@ -127,8 +126,23 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
 
     /* --- DEFINES --- */
 
-    /** Keybind to open in-game chat. */
+    /** Keybind to open in-game chat. TODO read from config.xml  */
     public static final int OPEN_CHAT = 0x0D;
+
+    /** Left arrow virtual key code. */
+    public static final int VK_LEFT = 0x25;
+
+    /** Right arrow virtual key code. */
+    public static final int VK_RIGHT = 0x27;
+
+    /** Backspace virtual key code. */
+    public static final int VK_BACK = 0x08;
+
+    /** Delete virtual key code. */
+    public static final int VK_DELETE = 0x2E;
+
+    /** List of chars to ignore when building input command. */
+    public static final char[] INVALID_CHARS = {'\0', '\t', '\b', '\n', '\r'};
 
 
     /* --- ATTRIBUTES --- */
@@ -145,7 +159,7 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
     /** True if the {@link #OPEN_CHAT open chat} keybind is held down, False otherwise. */
     private volatile boolean openChatHeldDown;
 
-    /** True when the keyboard events are being echoed, False otherwie. */
+    /** True when the keyboard events are being echoed, False otherwise. */
     private volatile boolean echoing;
 
     /** Handle to the hook procedure. */
@@ -172,6 +186,7 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
             app = new MidiWars();
         } catch (IOException | SAXException | ParserConfigurationException | Instrument.InvalidInstrumentException e) {
             // TODO
+            e.printStackTrace();
         }
 
         // inits
@@ -243,12 +258,15 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
     }
 
 
-    /**
+    /** TODO when insert mode is turned on
      * Creates a command string from the stored keyboard events
      * and parses it, in order to decide what to do.
      * Clears the list afterwards.
      */
     private void parse() {
+
+        // current index of cursor
+        int cursor = 0;
 
         // user typed command
         StringBuilder cmdBuilder = new StringBuilder();
@@ -261,19 +279,57 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
             // only interested in keydown events
             if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
 
+                // check for cursor movement and backspace/delete
+                switch (vkCode) {
+
+                    case VK_LEFT:
+                        if (cursor > 0) cursor--;
+                        break;
+
+                    case VK_RIGHT:
+                        if (cursor < cmdBuilder.length()) cursor++;
+                        break;
+
+                    case VK_BACK:
+                        if (cursor > 0) cmdBuilder.deleteCharAt(--cursor);
+                        break;
+
+                    case VK_DELETE:
+                        if (cursor < cmdBuilder.length()) cmdBuilder.deleteCharAt(cursor);
+                        break;
+
+                    default:
+                        break;
+                }
+
+                // TODO detect shift, ctrl etc to allow chars such as " ? ! @ on filenames
                 // translate virtual-key code to char
                 char c = (char) user32.MapVirtualKey(new UINT(vkCode), new UINT(2)).intValue();
 
-                cmdBuilder.append(c);
+                // check if char is valid
+                boolean isEscapeSequence = false;
+                for (char escapeSequence : INVALID_CHARS) {
+                    if (c == escapeSequence) {
+                        isEscapeSequence = true;
+                        break;
+                    }
+                }
+
+                // add char to command
+                if (Character.isDefined(c) && !isEscapeSequence)
+                {
+                    cmdBuilder.insert(cursor, c);
+                    cursor++;
+                }
             }
         }
 
         String cmd = cmdBuilder.toString();
 
-        kbdEvents.clear();
-
+        // lower case
         cmd = cmd.toLowerCase(ENGLISH);
-        System.out.println("debug: CMD: " + cmd);
+
+        kbdEvents.clear();
 
         // get command arguments
         String[] args = cmd.split("\\s+");
@@ -324,6 +380,7 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
             Thread.sleep(20);
         } catch (InterruptedException e) {
             // TODO
+            e.printStackTrace();
         }
 
         echoing = false;
@@ -342,6 +399,7 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
             app.play(instrument, filename);
         } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException e) {
             // TODO
+            e.printStackTrace();
         }
     }
 
@@ -354,7 +412,6 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
 
     @Override
     public void quit() {
-        System.out.println("debug: Entered quit().");
         quit = true;
     }
 }

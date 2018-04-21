@@ -141,6 +141,11 @@ public class MidiWars {
         midiPath = doc.getDocumentElement().getElementsByTagName("midipath").item(0).getTextContent();
         defaultInstrument = Instrument.newInstrument(doc.getDocumentElement().getElementsByTagName("instrument").item(0).getTextContent());
 
+        // make sure path has a trailing slash
+        if (!midiPath.endsWith("/") && !midiPath.endsWith("\\")) {
+            midiPath += "/";
+        }
+
         /* TODO if text is null or incorrect, throw exception
         File path = new File(midiPath);
         if (!path.exists() || !path.isDirectory()) {
