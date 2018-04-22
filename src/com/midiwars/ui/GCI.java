@@ -40,22 +40,32 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
         /** Virtual-key code. */
         public int vkCode;
 
+        /* Hardware scan code. */
+        public int scanCode;
+
+        /* Keyboard state. */
+        public byte[] lpKeyState;
+
 
         /**
          * Creates a new KbdEvent object.
          *
          * @param msg    Message type.
          * @param vkCode Virtual-key code.
+         * @param scanCode Hardware scan code.
+         * @param lpKeyState Keyboard state.
          */
-        public KbdEvent(int msg, int vkCode) {
+        public KbdEvent(int msg, int vkCode, int scanCode, byte[] lpKeyState) {
             this.msg = msg;
             this.vkCode = vkCode;
+            this.scanCode = scanCode;
+            this.lpKeyState = lpKeyState;
         }
 
     } // KbdEvent
 
 
-    /**
+    /** TODO refactor: remove struct and only work with handler (add self to event list)
      * Implementation of the handling of a keyboard event.
      */
     private class KbdEventHandler implements Runnable {
@@ -66,16 +76,21 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
         /** Virtual-key code. */
         private final int vkCode;
 
+        /* Hardware scan code. */
+        private final int scanCode;
+
 
         /**
          * Creates a new KbdEventHandler object.
          *
          * @param msg    Message received.
          * @param vkCode Virtual-key code of key that generated the event.
+         * @param scanCode Hardware scan code for the key that generated the event.
          */
-        public KbdEventHandler(int msg, int vkCode) {
+        public KbdEventHandler(int msg, int vkCode, int scanCode) {
             this.msg = msg;
             this.vkCode = vkCode;
+            this.scanCode = scanCode;
         }
 
 
@@ -116,7 +131,13 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
             // other keys
             else if (open.get()) {
                 synchronized (kbdEvents) {
-                    kbdEvents.add(new KbdEvent(msg, vkCode));
+
+                    // get current keyboard state
+                    byte[] lpKeyState = new byte[256];
+                    user32.GetKeyboardState(lpKeyState);
+
+                    // store event
+                    kbdEvents.add(new KbdEvent(msg, vkCode, scanCode, lpKeyState));
                 }
             }
         }
@@ -249,9 +270,10 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
         // get message and virtual-key code
         int msg = wParam.intValue();
         int vkCode = kbdStruct.vkCode;
+        int scanCode = kbdStruct.scanCode;
 
         // delegate message processing
-        Thread kbdEventHandler = new Thread(new KbdEventHandler(msg, vkCode));
+        Thread kbdEventHandler = new Thread(new KbdEventHandler(msg, vkCode, scanCode));
         kbdEventHandler.start();
 
         return user32.CallNextHookEx(null, nCode, wParam, lParam);
@@ -275,6 +297,8 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
 
             int msg = e.msg;
             int vkCode = e.vkCode;
+            int scanCode = e.scanCode;
+            byte[] lpKeyState = e.lpKeyState;
 
             // only interested in keydown events
             if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
@@ -302,33 +326,42 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
                         break;
                 }
 
-                // TODO detect shift, ctrl etc to allow chars such as " ? ! @ on filenames
                 // translate virtual-key code to char
-                char c = (char) user32.MapVirtualKey(new UINT(vkCode), new UINT(2)).intValue();
+                DWORDByReference lpChar = new DWORDByReference();
+                int result = user32.ToAscii(new UINT(vkCode), new UINT(scanCode), lpKeyState, lpChar, new UINT(0));
+
+                // init char as invalid
+                char c = '\0';
+
+                // get char
+                if (result == 1) {
+                    c = (char) lpChar.getValue().intValue();
+                }
 
                 // check if char is valid
-                boolean isEscapeSequence = false;
-                for (char escapeSequence : INVALID_CHARS) {
-                    if (c == escapeSequence) {
-                        isEscapeSequence = true;
+                boolean valid = true;
+                for (char invalidChar : INVALID_CHARS) {
+                    if (c == invalidChar) {
+                        valid = false;
                         break;
                     }
                 }
 
                 // add char to command
-                if (Character.isDefined(c) && !isEscapeSequence)
-                {
+                if (valid) {
                     cmdBuilder.insert(cursor, c);
                     cursor++;
                 }
             }
         }
 
-        String cmd = cmdBuilder.toString();
-
         // lower case
+        String cmd = cmdBuilder.toString();
         cmd = cmd.toLowerCase(ENGLISH);
 
+        System.out.println("debug: CMD: " + cmd);
+
+        // reset list
         kbdEvents.clear();
 
         // get command arguments
