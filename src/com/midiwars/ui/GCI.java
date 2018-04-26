@@ -32,7 +32,7 @@ public class GCI extends UserInterface implements LowLevelKeyboardProc {
     /**
      * 'C++ Struct' that represents a keyboard event.
      */
-    private class KbdEvent {
+    private class KbdEvent implements Runnable {
 
         /** Message tye. */
         public int msg;
@@ -53,46 +53,13 @@ public class GCI extends UserInterface implements LowLevelKeyboardProc {
          * @param msg    Message type.
          * @param vkCode Virtual-key code.
          * @param scanCode Hardware scan code.
-         * @param lpKeyState Keyboard state.
          */
-        public KbdEvent(int msg, int vkCode, int scanCode, byte[] lpKeyState) {
+        public KbdEvent(int msg, int vkCode, int scanCode) {
             this.msg = msg;
             this.vkCode = vkCode;
             this.scanCode = scanCode;
-            this.lpKeyState = lpKeyState;
+            this.lpKeyState = new byte[256];
         }
-
-    } // KbdEvent
-
-
-    /** TODO refactor: remove struct and only work with handler (add self to event list)
-     * Implementation of the handling of a keyboard event.
-     */
-    private class KbdEventHandler implements Runnable {
-
-        /** Keyboard message. */
-        private final int msg;
-
-        /** Virtual-key code. */
-        private final int vkCode;
-
-        /* Hardware scan code. */
-        private final int scanCode;
-
-
-        /**
-         * Creates a new KbdEventHandler object.
-         *
-         * @param msg    Message received.
-         * @param vkCode Virtual-key code of key that generated the event.
-         * @param scanCode Hardware scan code for the key that generated the event.
-         */
-        public KbdEventHandler(int msg, int vkCode, int scanCode) {
-            this.msg = msg;
-            this.vkCode = vkCode;
-            this.scanCode = scanCode;
-        }
-
 
         @Override
         public void run() {
@@ -133,16 +100,15 @@ public class GCI extends UserInterface implements LowLevelKeyboardProc {
                 synchronized (kbdEvents) {
 
                     // get current keyboard state
-                    byte[] lpKeyState = new byte[256];
                     user32.GetKeyboardState(lpKeyState);
 
                     // store event
-                    kbdEvents.add(new KbdEvent(msg, vkCode, scanCode, lpKeyState));
+                    kbdEvents.add(this);
                 }
             }
         }
 
-    } // KbdEventHandler
+    } // KbdEvent
 
 
     /* --- DEFINES --- */
@@ -273,7 +239,7 @@ public class GCI extends UserInterface implements LowLevelKeyboardProc {
         int scanCode = kbdStruct.scanCode;
 
         // delegate message processing
-        Thread kbdEventHandler = new Thread(new KbdEventHandler(msg, vkCode, scanCode));
+        Thread kbdEventHandler = new Thread(new KbdEvent(msg, vkCode, scanCode));
         kbdEventHandler.start();
 
         return user32.CallNextHookEx(null, nCode, wParam, lParam);
