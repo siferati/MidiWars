@@ -27,7 +27,7 @@ import java.util.ArrayList;
 /** TODO refactor of elements of this class to Chat class.
  * Game Chat Interface.
  */
-public class GCI implements UserInterface, LowLevelKeyboardProc {
+public class GCI extends UserInterface implements LowLevelKeyboardProc {
 
     /**
      * 'C++ Struct' that represents a keyboard event.
@@ -118,7 +118,7 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
                     if (!open.get()) {
                         System.out.println("debug: CHAT CLOSED!");
                         synchronized (kbdEvents) {
-                            parse();
+                            buildCmd();
                         }
                     } else {
                         System.out.println("debug: CHAT OPEN!");
@@ -281,11 +281,11 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
 
 
     /** TODO when insert mode is turned on
-     * Creates a command string from the stored keyboard events
+     * Builds a command string from the stored keyboard events
      * and parses it, in order to decide what to do.
      * Clears the list afterwards.
      */
-    private void parse() {
+    private void buildCmd() {
 
         // current index of cursor
         int cursor = 0;
@@ -368,8 +368,7 @@ public class GCI implements UserInterface, LowLevelKeyboardProc {
         String[] args = cmd.split("\\s+");
 
         // parse arguments
-        Parser parser = new Parser(this);
-        parser.parse(args);
+        parse(args);
     }
 
 

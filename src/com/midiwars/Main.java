@@ -2,7 +2,6 @@ package com.midiwars;
 
 import com.midiwars.ui.CLI;
 import com.midiwars.ui.GCI;
-import com.midiwars.ui.Parser;
 
 /**
  * Entry point for the application.
@@ -23,8 +22,7 @@ public class Main {
         }
         else {
             System.out.println("debug: Launching Command Line Interface!");
-            Parser parser = new Parser(new CLI());
-            parser.parse(args);
+            new CLI().parse(args);
         }
     }
 }

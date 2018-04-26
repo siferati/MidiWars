@@ -14,7 +14,7 @@ import java.util.ArrayList;
 /**
  * Command line interface.
  */
-public class CLI implements UserInterface {
+public class CLI extends UserInterface {
 
     /* --- ATTRIBUTES --- */
 
