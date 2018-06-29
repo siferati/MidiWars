@@ -3,6 +3,7 @@ package com.midiwars.logic.instruments;
 import com.midiwars.logic.Keymap;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.logic.midi.NoteEvent;
+import com.midiwars.ui.Chat;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 import static com.midiwars.logic.instruments.Instrument.Warning.*;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
-/**
+/** TODO substituir delays / tempos com system.milis para ser exacto!
  * Represents a musical instrument.
  */
 public abstract class Instrument {
@@ -31,17 +32,6 @@ public abstract class Instrument {
 
         /** Some pauses last for too long, probably an error in the midi file. */
         PAUSES_TOO_LONG
-    }
-
-
-    /**
-     * Thrown when the default instrument in the configurations file is invalid.
-     */
-    public static class InvalidInstrumentException extends Exception {
-
-        public InvalidInstrumentException() {
-            super();
-        }
     }
 
 
@@ -112,28 +102,6 @@ public abstract class Instrument {
 
 
     /**
-     * Returns a new instrument of given name.
-     *
-     * @param name Name of the instrument.
-     *
-     * @return New instrument.
-     */
-    public static Instrument newInstrument(String name){
-
-        switch (name) {
-
-            case MagBell.NAME: return new MagBell();
-
-            case Flute.NAME: return new Flute();
-
-            case Harp.NAME:return new Harp();
-
-            default: return null;
-        }
-    }
-
-
-    /**
      * Plays the given midi timeline.
      *
      * @param midiTimeline Midi Timeline.
@@ -182,9 +150,13 @@ public abstract class Instrument {
                 // change keybars if needed
                 delay -= changeKeybars(keybarIndex);
 
-                // play note
+                // note keybind
                 keybind = Keymap.KEYBINDS[getKeyIndex(noteEvent.getKey())];
-                robot.keyPress(keybind);
+
+                // TODO only do this if NOT on cli mode!
+                // play note
+                delay -= Chat.instance.closeAndRestore(keybind);
+
                 heldKeybind = keybind;
 
                 // if there's time, look into the future and preemptively change key bars if needed
@@ -499,8 +471,9 @@ public abstract class Instrument {
                 heldKeybind = -1;
             }
 
-            // change key bar
-            robot.keyPress(keybind);
+            // TODO only do this if NOT on cli mode!
+            // change keybar
+            sleptAmount += Chat.instance.closeAndRestore(keybind);
 
             // update previous key bar change time
             previousKeybarChange = System.currentTimeMillis();

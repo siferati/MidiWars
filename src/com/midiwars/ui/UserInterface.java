@@ -1,6 +1,7 @@
 package com.midiwars.ui;
 
 import com.midiwars.logic.instruments.Instrument;
+import com.midiwars.logic.instruments.InstrumentFactory;
 
 /**
  * Represents a user interface.
@@ -117,7 +118,7 @@ public abstract class UserInterface {
                 case OPT_INST: {
 
                     if (i != args.length - 1) {
-                        instrument = Instrument.newInstrument(args[i + 1]);
+                        instrument = InstrumentFactory.newInstrument(args[i + 1]);
                         // skip next arg (since it's the instrument)
                         i++;
                     } else {

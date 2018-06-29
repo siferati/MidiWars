@@ -3,6 +3,7 @@ package com.midiwars.ui;
 import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.Instrument.Warning;
+import com.midiwars.logic.instruments.InstrumentFactory;
 import org.xml.sax.SAXException;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -38,8 +39,11 @@ public class CLI extends UserInterface {
         catch (NullPointerException e) {
             System.out.println("\nERROR: Configurations file doesn't have required format.");
         }
-        catch (Instrument.InvalidInstrumentException e) {
+        catch (InstrumentFactory.InvalidInstrumentException e) {
             System.out.println("\nERROR: Default instrument listed in the configurations file is invalid.");
+        }
+        catch (MidiWars.MidiPathNotFoundException e) {
+            System.out.println("\nERROR: Default path listed in the configurations file is invalid.");
         }
         catch (SAXException e) {
             System.out.println("\nERROR: Couldn't parse configurations file.");

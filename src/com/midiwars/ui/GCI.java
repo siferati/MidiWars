@@ -5,6 +5,7 @@ import static com.sun.jna.platform.win32.WinUser.*;
 import com.midiwars.jna.MyUser32;
 import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.instruments.Instrument;
+import com.midiwars.logic.instruments.InstrumentFactory;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.HHOOK;
 import org.xml.sax.SAXException;
@@ -46,14 +47,14 @@ public class GCI extends UserInterface {
 
         try {
             app = new MidiWars();
-        } catch (IOException | SAXException | ParserConfigurationException | Instrument.InvalidInstrumentException e) {
+            chat = new Chat(this);
+        } catch (IOException | SAXException | ParserConfigurationException | InstrumentFactory.InvalidInstrumentException | MidiWars.MidiPathNotFoundException | AWTException e) {
             // TODO
             e.printStackTrace();
         }
 
         // inits
         quit = false;
-        chat = new Chat(this);
 
         // dll
         user32 = MyUser32.INSTANCE;
@@ -102,11 +103,32 @@ public class GCI extends UserInterface {
     @Override
     public void play(Instrument instrument, String filename) {
         try {
+            // TODO remove this sleep
+            Thread.sleep(2000);
             app.play(instrument, filename);
-        } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException e) {
+        } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException | InterruptedException e) {
             // TODO
             e.printStackTrace();
         }
+
+        /* TODO remove this comment block
+        try {
+            Robot robot = new Robot();
+            Thread.sleep(2000);
+            robot.keyPress(10);
+            robot.keyRelease(10);
+            Thread.sleep(10);
+            robot.keyPress(VK_CONTROL);
+            robot.keyPress(VK_V);
+            Thread.sleep(10);
+            robot.keyRelease(VK_V);
+            robot.keyRelease(VK_CONTROL);
+        }
+        catch (Exception ignored)
+        {
+
+        }*/
+
     }
 
 

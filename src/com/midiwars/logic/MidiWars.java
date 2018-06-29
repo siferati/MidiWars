@@ -2,6 +2,8 @@ package com.midiwars.logic;
 
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.Instrument.*;
+import com.midiwars.logic.instruments.InstrumentFactory;
+import com.midiwars.logic.instruments.InstrumentFactory.*;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
@@ -24,6 +26,10 @@ public class MidiWars {
     /* --- DEFINES --- */
 
     public static class GameNotRunningException extends Exception {
+
+    }
+
+    public static class MidiPathNotFoundException extends Exception {
 
     }
 
@@ -51,7 +57,7 @@ public class MidiWars {
     /**
      * Default Constructor.
      */
-    public MidiWars() throws IOException, SAXException, ParserConfigurationException, NullPointerException, InvalidInstrumentException {
+    public MidiWars() throws IOException, SAXException, ParserConfigurationException, NullPointerException, InvalidInstrumentException, MidiPathNotFoundException {
 
         user32 = User32.INSTANCE;
 
@@ -71,15 +77,16 @@ public class MidiWars {
      */
     public void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException {
 
+        // TODO work only when guildwars is the active window - install alt tab hook
         // find guild wars window
         WinDef.HWND gameWindow = user32.FindWindow(null, GAME_WINDOW);
 
         // bring window to the front
         if (gameWindow != null) {
-            user32.SetForegroundWindow(gameWindow);
+            // TODO uncomment user32.SetForegroundWindow(gameWindow);
         }
         else {
-            throw new GameNotRunningException();
+            // TODO uncomment throw new GameNotRunningException();
         }
 
         // construct timeline from midi file
@@ -129,7 +136,7 @@ public class MidiWars {
      * @throws SAXException If couldn't parse configurations file.
      * @throws NullPointerException If configurations file doesn't have required format.
      */
-    private void loadConfigs() throws ParserConfigurationException, IOException, SAXException, NullPointerException, InvalidInstrumentException {
+    private void loadConfigs() throws ParserConfigurationException, IOException, SAXException, NullPointerException, InvalidInstrumentException, MidiPathNotFoundException {
 
         // setup doc
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -139,18 +146,18 @@ public class MidiWars {
 
         // get first occurrence only
         midiPath = doc.getDocumentElement().getElementsByTagName("midipath").item(0).getTextContent();
-        defaultInstrument = Instrument.newInstrument(doc.getDocumentElement().getElementsByTagName("instrument").item(0).getTextContent());
+        defaultInstrument = InstrumentFactory.newInstrument(doc.getDocumentElement().getElementsByTagName("instrument").item(0).getTextContent());
 
         // make sure path has a trailing slash
         if (!midiPath.endsWith("/") && !midiPath.endsWith("\\")) {
             midiPath += "/";
         }
 
-        /* TODO if text is null or incorrect, throw exception
+        // check if path is valid
         File path = new File(midiPath);
         if (!path.exists() || !path.isDirectory()) {
-            throw new
-        }*/
+            throw new MidiPathNotFoundException();
+        }
 
         if (defaultInstrument == null) {
             throw new InvalidInstrumentException();
