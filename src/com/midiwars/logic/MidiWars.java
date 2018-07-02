@@ -5,6 +5,8 @@ import com.midiwars.logic.instruments.Instrument.*;
 import com.midiwars.logic.instruments.InstrumentFactory;
 import com.midiwars.logic.instruments.InstrumentFactory.*;
 import com.midiwars.logic.midi.MidiTimeline;
+import com.midiwars.ui.Chat;
+import com.midiwars.util.MyRobot;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import org.w3c.dom.Document;
@@ -75,7 +77,7 @@ public class MidiWars {
      * @throws IOException Can't open file.
      * @throws AWTException If the platform configuration does not allow low-level input control.
      */
-    public void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException {
+    public void play(Instrument instrument, String filepath, Chat chat) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException {
 
         // TODO work only when guildwars is the active window - install alt tab hook
         // find guild wars window
@@ -97,7 +99,9 @@ public class MidiWars {
             instrument = defaultInstrument;
         }
 
-        instrument.play(midiTimeline);
+        // play
+        MyRobot robot = new MyRobot(chat);
+        instrument.play(midiTimeline, robot);
     }
 
 

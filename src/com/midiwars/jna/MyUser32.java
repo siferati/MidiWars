@@ -39,4 +39,17 @@ public interface MyUser32 extends User32 {
      *                      virtual key to form a single character.
      */
     int ToAscii(UINT uVirtKey, UINT uScanCode, byte[] lpKeyState, DWORDByReference lpChar, UINT uFlags);
+
+    /**
+     * Blocks keyboard and mouse input events from reaching applications.
+     *
+     * @param fBlockIt  The function's purpose. If this parameter is TRUE, keyboard and mouse input events are blocked.
+     *                  If this parameter is FALSE, keyboard and mouse events are unblocked.
+     *                  Note that only the thread that blocked input can successfully unblock input.
+     *
+     * @return          If the function succeeds, the return value is nonzero.
+     *                  If input is already blocked, the return value is zero.
+     *                  To get extended error information, call GetLastError.
+     */
+    boolean BlockInput(boolean fBlockIt);
 }

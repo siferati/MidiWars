@@ -124,7 +124,7 @@ public class CLI extends UserInterface {
                 Thread.sleep(1000);
             }
 
-            app.play(instrument, filename);
+            app.play(instrument, filename, null);
         }
         catch (InterruptedException e) {
             System.out.println("\nERROR: Thread was interrupted while sleeping.");

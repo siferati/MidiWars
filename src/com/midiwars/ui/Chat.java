@@ -1,23 +1,15 @@
 package com.midiwars.ui;
 
 import com.midiwars.jna.MyUser32;
+import com.midiwars.util.Pair;
 import com.midiwars.util.SyncBoolean;
 import com.sun.jna.platform.win32.WinUser;
 
-import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 
 import static com.sun.jna.Pointer.nativeValue;
 import static com.sun.jna.platform.win32.WinUser.*;
-import static java.awt.event.KeyEvent.VK_ENTER;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
-import static java.awt.event.KeyEvent.VK_V;
-import static java.awt.event.KeyEvent.VK_SHIFT;
-import static java.awt.event.KeyEvent.VK_CONTROL;
-import static java.awt.event.KeyEvent.VK_ALT;
-import static java.awt.event.KeyEvent.VK_ALT_GRAPH;
 
 
 import static java.util.Locale.ENGLISH;
@@ -149,9 +141,6 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
     /* --- ATTRIBUTES --- */
 
-    /** The instance. */
-    public static Chat instance;
-
     /** The user interface that owns this instance. */
     private UserInterface ui;
 
@@ -161,19 +150,11 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     /** True if the {@link #WVK_RETURN open chat} keybind is held down, False otherwise. */
     private volatile SyncBoolean openChatHeldDown;
 
-    /** True while the method closeAndRestore is executing, False otherwise. */
-    private volatile SyncBoolean closingAndRestoring;
-
     /** List of keyboard events detected while chat was active. */
     private final ArrayList<KbdEvent> kbdEvents;
 
-    /** Used to simulate key presses. */
-    private Robot robot;
-
     /** DLL. */
     private final MyUser32 user32;
-
-    Clipboard clipboard;
 
 
     /* --- METHODS --- */
@@ -183,22 +164,17 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
      *
      * @param ui The user interface that owns this instance.
      */
-    public Chat(UserInterface ui) throws AWTException {
+    public Chat(UserInterface ui) {
 
         this.ui = ui;
 
         // inits
         open = new SyncBoolean(false);
         openChatHeldDown = new SyncBoolean(false);
-        closingAndRestoring = new SyncBoolean(false);
-        robot = new Robot();
         kbdEvents = new ArrayList<>();
-        clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
         // dll
         user32 = MyUser32.INSTANCE;
-
-        instance = this;
     }
 
 
@@ -232,7 +208,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
      *
      * @return String built from the stored keyboard events.
      */
-    private String buildString() {
+    public Pair<String, Integer> buildString() {
 
         // current index of cursor
         int cursor = 0;
@@ -305,7 +281,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
             }
         }
 
-        return strBuilder.toString();
+        return new Pair<>(strBuilder.toString(), cursor);
     }
 
 
@@ -316,10 +292,8 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
      */
     private void buildCmd() {
 
-        // get cmd and make it case insensitive
-        String cmd = buildString();
-        cmd = cmd.toLowerCase(ENGLISH);
-
+        // get cmd
+        String cmd = buildString().first;
         System.out.println("debug: CMD: " + cmd);
 
         // reset list
@@ -333,93 +307,12 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     }
 
 
-    /** TODO move this to custom Robot class and call it for every keypress (and key release - test without this first)!
-     * Releases modifier keys.
-     */
-    private void releaseModifiers() {
-        if(user32.GetAsyncKeyState(VK_SHIFT) < 0) {
-            robot.keyRelease(VK_SHIFT);
-        }
-        if(user32.GetAsyncKeyState(VK_CONTROL) < 0 && user32.GetAsyncKeyState(VK_ALT) < 0) {
-            robot.keyRelease(VK_ALT_GRAPH);
-        }
-        else {
-            if(user32.GetAsyncKeyState(VK_CONTROL) < 0) {
-                robot.keyRelease(VK_CONTROL);
-            }
-            if(user32.GetAsyncKeyState(VK_ALT) < 0) {
-                robot.keyRelease(VK_ALT);
-            }
-        }
-    }
-
     /**
-     * If the in-game chat is currently open,
-     * closes it, presses the given key,
-     * and re-opens it afterwards,
-     * restoring its previous state.
-     * Otherwise, just presses the given key.
+     * Getter.
      *
-     * @param vkCode Virtual-key code of key to press.
-     *
-     * @return Amount of time slept (ms).
+     * @return True if chat is open, False otherwise.
      */
-    public long closeAndRestore(int vkCode) {
-
-        closingAndRestoring.set(true);
-
-        long x = System.currentTimeMillis();
-
-        if (!open.get()) {
-            releaseModifiers();
-            robot.keyPress(vkCode);
-            closingAndRestoring.set(false);
-            return 0;
-        }
-        else {
-
-            // build string from kbd events
-            String str = buildString();
-
-            if (str.equals("")) {
-                // return;
-            }
-
-            // close chat
-            releaseModifiers();
-            robot.keyPress(VK_ESCAPE);
-            robot.keyRelease(VK_ESCAPE);
-
-            // press key
-            releaseModifiers();
-            robot.keyPress(vkCode);
-
-            // re-open chat
-            releaseModifiers();
-            robot.keyPress(VK_ENTER);
-            robot.keyRelease(VK_ENTER);
-
-            // otherwise key presses aren't detected
-            robot.delay(10);
-
-            // copy string to type to clipboard
-            StringSelection selection = new StringSelection(str);
-            clipboard.setContents(selection, selection);
-
-            // paste string to chat
-            releaseModifiers();
-            robot.keyPress(VK_CONTROL);
-            robot.keyPress(VK_V);
-
-            // otherwise key presses aren't detected
-            robot.delay(10);
-
-            // release pressed keys
-            robot.keyRelease(VK_V);
-            robot.keyRelease(VK_CONTROL);
-
-            closingAndRestoring.set(false);
-            return (System.currentTimeMillis() - x);
-        }
+    public boolean isOpen() {
+        return open.get();
     }
 }

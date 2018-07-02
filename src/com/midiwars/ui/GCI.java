@@ -48,7 +48,7 @@ public class GCI extends UserInterface {
         try {
             app = new MidiWars();
             chat = new Chat(this);
-        } catch (IOException | SAXException | ParserConfigurationException | InstrumentFactory.InvalidInstrumentException | MidiWars.MidiPathNotFoundException | AWTException e) {
+        } catch (IOException | SAXException | ParserConfigurationException | InstrumentFactory.InvalidInstrumentException | MidiWars.MidiPathNotFoundException e) {
             // TODO
             e.printStackTrace();
         }
@@ -103,32 +103,11 @@ public class GCI extends UserInterface {
     @Override
     public void play(Instrument instrument, String filename) {
         try {
-            // TODO remove this sleep
-            Thread.sleep(2000);
-            app.play(instrument, filename);
-        } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException | InterruptedException e) {
+            app.play(instrument, filename, chat);
+        } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException e) {
             // TODO
             e.printStackTrace();
         }
-
-        /* TODO remove this comment block
-        try {
-            Robot robot = new Robot();
-            Thread.sleep(2000);
-            robot.keyPress(10);
-            robot.keyRelease(10);
-            Thread.sleep(10);
-            robot.keyPress(VK_CONTROL);
-            robot.keyPress(VK_V);
-            Thread.sleep(10);
-            robot.keyRelease(VK_V);
-            robot.keyRelease(VK_CONTROL);
-        }
-        catch (Exception ignored)
-        {
-
-        }*/
-
     }
 
 
