@@ -12,22 +12,29 @@
 * Warnings
   * ~~Notes outside of instrument's range~~
   * ~~Tempo too fast~~
-  * Note spam
   * ~~Notes too long~~
   * ~~Pauses too long~~
+  * Note spam
 * ~~Tempo changes in multiple tracks~~
 * ~~SMPTE~~
 * Instruments
   * ~~Flute~~
   * ~~Magnanimous Choir Bell~~
+  * ~~Musical Harp~~
   * Marriner's Horn (tuning?)
   * Musical Bass Guitar (1st of June, 2016, update?)
-  * ~~Musical Harp~~
   * Musical Lute (1st of June, 2016, update?)
 * ~~CLI (config.xml)~~
-* ~~Open game window when playback starts~~
-* In-game chat commands
-* Complete config.xml (hotkeys etc)
-* Complete CLI
+* ~~In-game chat commands~~
+* ~~Typing while playing~~
+* Allow filenames to have spaces
+* Playlist system
+  * Setup (playlist.xml)
+  * Chat commands
+  * Media keys
+* Detect when game looses focus and pause the app
+* System tray
+* Check for updates on start
 * JavaDocs
-* GUI (overlay)
+* Test run
+* Setup repository for release
