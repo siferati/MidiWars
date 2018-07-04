@@ -110,6 +110,16 @@ public class GCI extends UserInterface {
         }
     }
 
+    @Override
+    public void playlist(Instrument instrument, String filename) {
+        try {
+            app.playlist(instrument, filename, chat);
+        } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException | ParserConfigurationException | MidiWars.MidifilesNotFoundException | SAXException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public void canPlay(Instrument instrument, String filename) {

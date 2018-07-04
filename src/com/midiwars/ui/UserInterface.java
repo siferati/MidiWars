@@ -10,14 +10,20 @@ public abstract class UserInterface {
 
     /* --- DEFINES --- */
 
+    /** All commands coming from the in-game chat should start with this string. */
+    public final static String CMD_GCI = "/mw";
+
     /** Command to exit the program. */
-    public final static String CMD_QUIT = "/quit";
+    public final static String CMD_QUIT = "quit";
 
     /** Command to play a midi file. */
-    public static final String CMD_PLAY = "/play";
+    public static final String CMD_PLAY = "play";
+
+    /** Command to play a playlist. */
+    public static final String CMD_PLAYLIST = "playlist";
 
     /** Command to check playability of a midi file. */
-    public final static String CMD_CANPLAY = "/canplay";
+    public final static String CMD_CANPLAY = "canplay";
 
     /**  Option to not use default instrument. */
     public final static String OPT_INST = "-inst";
@@ -38,6 +44,15 @@ public abstract class UserInterface {
      * @param filename File to play.
      */
     abstract void play(Instrument instrument, String filename);
+
+
+    /**
+     * Plays the songs listed in the given playlist.
+     *
+     * @param instrument Instrument to play given playlist with.
+     * @param filename Playlist to play.
+     */
+    abstract void playlist(Instrument instrument, String filename);
 
 
     /**
@@ -65,6 +80,7 @@ public abstract class UserInterface {
 
         // what user wants to do
         boolean play = false;
+        boolean playlist = false;
         boolean canPlay = false;
         boolean quit = false;
 
@@ -94,6 +110,19 @@ public abstract class UserInterface {
                     if (i != args.length - 1) {
                         filename = args[i + 1];
                         play = true;
+                        // skip next arg (since it's the filename)
+                        i++;
+                    } else {
+                        stop = true;
+                    }
+                    break;
+                }
+
+                case CMD_PLAYLIST: {
+
+                    if (i != args.length - 1) {
+                        filename = args[i + 1];
+                        playlist = true;
                         // skip next arg (since it's the filename)
                         i++;
                     } else {
@@ -136,9 +165,11 @@ public abstract class UserInterface {
         if (quit) {
             quit();
         }
-        else if (!stop && !filename.isEmpty() && !(play && canPlay)) {
+        else if (!stop && !filename.isEmpty() && !(play && canPlay && playlist)) {
 
             if (play) play(instrument, filename);
+
+            if (playlist) playlist(instrument, filename);
 
             if (canPlay) canPlay(instrument, filename);
         }

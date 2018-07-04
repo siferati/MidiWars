@@ -59,8 +59,8 @@ public class CLI extends UserInterface {
 
         System.out.println("\nUsage: java -jar MidiWars.jar [COMMAND] [OPTIONS]");
         System.out.println("\nPossible commands:\n");
-        System.out.println("\t/play <FILENAME>\tPlays the given MIDI file using the default instrument.");
-        System.out.println("\t/canplay <FILENAME>\tChecks if the given MIDI file can be properly played using the default instrument.");
+        System.out.println("\tplay <FILENAME>\tPlays the given MIDI file using the default instrument.");
+        System.out.println("\tcanplay <FILENAME>\tChecks if the given MIDI file can be properly played using the default instrument.");
         System.out.println("\nPossible options:\n");
         System.out.println("\t-inst <INSTRUMENT>\tCommands will use the given instrument instead of the default one. Resorts back to default instrument if given instrument is invalid.");
         System.out.println("\t                  \tPossible values: flute, harp, magbell.");
@@ -143,6 +143,12 @@ public class CLI extends UserInterface {
             System.out.println("\nCouldn't find the given MIDI file. Please provide a valid filename.");
             displayUsage();
         }
+    }
+
+    @Override
+    public void playlist(Instrument instrument, String filename) {
+        System.out.println("\nThis command is invalid for the current application mode.");
+        displayUsage();
     }
 
     @Override

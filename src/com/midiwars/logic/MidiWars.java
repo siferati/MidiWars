@@ -10,6 +10,7 @@ import com.midiwars.util.MyRobot;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -35,6 +36,10 @@ public class MidiWars {
 
     }
 
+    public static class MidifilesNotFoundException extends Exception {
+
+    }
+
     /** Name of the window of the game. */
     public final static String GAME_WINDOW = "Guild Wars 2";
 
@@ -52,6 +57,9 @@ public class MidiWars {
 
     /** Default instrument. */
     private Instrument defaultInstrument;
+
+    /** The playlist that's currently playing. */
+    private Playlist playlist;
 
 
     /* --- METHODS --- */
@@ -72,6 +80,7 @@ public class MidiWars {
      *
      * @param instrument Instrument to play given file with.
      * @param filepath Path of midi file to play.
+     * @param chat The in-game chat.
      *
      * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
@@ -102,6 +111,61 @@ public class MidiWars {
         // play
         MyRobot robot = new MyRobot(chat);
         instrument.play(midiTimeline, robot);
+    }
+
+    /**
+     * Plays the given playlist.
+     *
+     * @param instrument Instrument to play given playlist with.
+     * @param filepath Path of playlist to play.
+     * @param chat The in-game chat.
+     *
+     * @throws ParserConfigurationException If there was a configuration error within the parser.
+     * @throws IOException If playlist file is missing.
+     * @throws SAXException If couldn't parse playlist file.
+     * @throws NullPointerException If playlist file doesn't have required format.
+     */
+    public void playlist(Instrument instrument, String filepath, Chat chat) throws ParserConfigurationException, IOException, SAXException, NullPointerException, MidifilesNotFoundException, AWTException, InvalidMidiDataException, GameNotRunningException, InterruptedException {
+
+        // setup doc
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setIgnoringElementContentWhitespace(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(new File(midiPath + filepath));
+
+        // get midifiles
+        ArrayList<String> midifiles = new ArrayList<>();
+        NodeList nodeList = doc.getDocumentElement().getElementsByTagName("midifile");
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            midifiles.add(nodeList.item(i).getTextContent());
+        }
+
+        // get options
+        boolean shuffle = doc.getDocumentElement().getElementsByTagName("shuffle").getLength() > 0;
+        boolean repeat = doc.getDocumentElement().getElementsByTagName("repeat").getLength() > 0;
+
+        // instrument priority: command > playlist > default
+        if (instrument == null) {
+            NodeList instruments = doc.getDocumentElement().getElementsByTagName("instrument");
+            if (instruments.getLength() > 0) {
+                instrument = InstrumentFactory.newInstrument(instruments.item(0).getTextContent());
+            }
+        }
+        if (instrument == null) {
+            instrument = defaultInstrument;
+        }
+
+        // check if midifiles are valid
+        for (String midifile : midifiles) {
+            File file = new File(midiPath + midifile);
+            if (!file.exists() || file.isDirectory()) {
+                throw new MidifilesNotFoundException();
+            }
+        }
+
+        // play list
+        playlist = new Playlist(midifiles, shuffle, repeat, instrument, chat);
+        playlist.play(this);
     }
 
 

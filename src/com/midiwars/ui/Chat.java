@@ -356,7 +356,10 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
         }
 
         // parse arguments
-        new Thread(() -> ui.parse(args.toArray(new String[0]))).start();
+        if (args.get(0).equals(UserInterface.CMD_GCI)) {
+            args.remove(0);
+            new Thread(() -> ui.parse(args.toArray(new String[0]))).start();
+        }
     }
 
 
