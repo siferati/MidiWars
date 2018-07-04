@@ -11,9 +11,6 @@ import static com.sun.jna.Pointer.nativeValue;
 import static com.sun.jna.platform.win32.WinUser.*;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
 
-
-import static java.util.Locale.ENGLISH;
-
 /**
  * Represents the in-game chat.
  */
@@ -299,11 +296,67 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
         // reset list
         kbdEvents.clear();
 
-        // get command arguments
-        String[] args = cmd.split("\\s+");
+        // get words in string
+        String[] words = cmd.split("\\s+");
+
+        // inits
+        ArrayList<String> args = new ArrayList<>();
+        boolean argHasSpaces = false;
+        StringBuilder arg = new StringBuilder();
+
+        // get args from command
+        // there are so many ifs in order to try to emulate shell behaviour as best as possible,
+        // including missing double quotes, nested double quotes, etc
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            if (word.equals("\"")) {
+                argHasSpaces = true;
+                arg = new StringBuilder(" ");
+            } else if (word.startsWith("\"") && word.endsWith("\"")) {
+                if (argHasSpaces) {
+                    argHasSpaces = false;
+                    arg.append(" ").append(word);
+                    args.add(arg.substring(1, arg.length() - 1));
+                } else {
+                    args.add(word.substring(1, word.length() - 1));
+                }
+            } else if (word.startsWith("\"")) {
+                argHasSpaces = true;
+                arg = new StringBuilder(word);
+                if (i == words.length - 1) {
+                    args.add(arg.substring(1));
+                }
+            } else if (word.endsWith("\"")) {
+                if (argHasSpaces) {
+                    argHasSpaces = false;
+                    arg.append(" ").append(word);
+                    args.add(arg.substring(1, arg.length() - 1));
+                } else {
+                    argHasSpaces = true;
+                    arg = new StringBuilder("\"" + word.substring(0, word.length() - 1));
+                    if (i == words.length - 1) {
+                        args.add(arg.substring(1));
+                    }
+                }
+            } else {
+                if (argHasSpaces) {
+                    arg.append(" ").append(word);
+                    if (i == words.length - 1) {
+                        args.add(arg.substring(1));
+                    }
+                } else {
+                    args.add(word);
+                }
+            }
+        }
+
+        // remove double quotes from arguments
+        for (int i = 0; i < args.size(); i++) {
+            args.set(i, args.get(i).replace("\"", ""));
+        }
 
         // parse arguments
-        new Thread(() -> ui.parse(args)).start();
+        new Thread(() -> ui.parse(args.toArray(new String[0]))).start();
     }
 
 

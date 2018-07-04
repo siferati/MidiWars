@@ -27,7 +27,7 @@
 * ~~CLI (config.xml)~~
 * ~~In-game chat commands~~
 * ~~Typing while playing~~
-* Allow filenames to have spaces
+* ~~Allow filenames to have spaces~~
 * Playlist system
   * Setup (playlist.xml)
   * Chat commands

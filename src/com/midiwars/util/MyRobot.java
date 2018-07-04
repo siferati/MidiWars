@@ -64,17 +64,19 @@ public class MyRobot extends Robot {
         String str = built.first;
         int cursor = built.second;
 
+        // block input and release modifiers
         user32.BlockInput(true);
+        releaseModifiers();
 
         // close chat
-        keyPressReleasingModifiers(VK_ESCAPE);
-        keyRelease(VK_ESCAPE);
+        super.keyPress(VK_ESCAPE);
+        super.keyRelease(VK_ESCAPE);
 
         // press key
-        keyPressReleasingModifiers(keycode);
+        super.keyPress(keycode);
 
         // re-open chat
-        keyPressReleasingModifiers(VK_ENTER);
+        super.keyPress(VK_ENTER);
         keyRelease(VK_ENTER);
 
         // otherwise key presses aren't detected
@@ -87,7 +89,7 @@ public class MyRobot extends Robot {
             clipboard.setContents(selection, selection);
 
             // paste string to chat
-            keyPressReleasingModifiers(VK_CONTROL);
+            super.keyPress(VK_CONTROL);
             super.keyPress(VK_V);
 
             // otherwise key presses aren't detected
@@ -109,13 +111,10 @@ public class MyRobot extends Robot {
 
 
     /**
-     * Presses the given key, releasing any modifier keys before that.
-     *
-     * @param keycode Key to press.
+     * Releases modifier keys.
      */
-    private synchronized void keyPressReleasingModifiers(int keycode) {
+    private synchronized void releaseModifiers() {
 
-        // release modifiers
         if(user32.GetAsyncKeyState(VK_SHIFT) < 0) {
             super.keyRelease(VK_SHIFT);
         }
@@ -128,8 +127,5 @@ public class MyRobot extends Robot {
         if(user32.GetAsyncKeyState(VK_ALT) < 0) {
             super.keyRelease(VK_ALT);
         }
-
-        // press key
-        super.keyPress(keycode);
     }
 }
