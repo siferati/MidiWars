@@ -3,7 +3,7 @@ package com.midiwars.ui;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.InstrumentFactory;
 
-/**
+/** TODO picocli
  * Represents a user interface.
  */
 public abstract class UserInterface {
@@ -19,8 +19,20 @@ public abstract class UserInterface {
     /** Command to play a midi file. */
     public static final String CMD_PLAY = "play";
 
-    /** Command to play a playlist. */
-    public static final String CMD_PLAYLIST = "playlist";
+    /** Command to pause the playback of the playlist. */
+    public static final String CMD_PAUSE = "pause";
+
+    /** Command to resume the playback of the playlist. */
+    public static final String CMD_RESUME = "resume";
+
+    /** Command to stop the playback of the playlist. */
+    public static final String CMD_STOP = "stop";
+
+    /** Command to play previous song. */
+    public static final String CMD_PREV = "prev";
+
+    /** Command to play next song. */
+    public static final String CMD_NEXT = "next";
 
     /** Command to check playability of a midi file. */
     public final static String CMD_CANPLAY = "canplay";
@@ -56,6 +68,36 @@ public abstract class UserInterface {
 
 
     /**
+     * Pauses the playback.
+     */
+    abstract void pause();
+
+
+    /**
+     * Resumes playback.
+     */
+    abstract void resume();
+
+
+    /**
+     * Stops playback.
+     */
+    abstract void stop();
+
+
+    /**
+     * Plays previous song.
+     */
+    abstract void prev();
+
+
+    /**
+     * Plays next song.
+     */
+    abstract void next();
+
+
+    /**
      * Checks if the given midi file can be played by the given instrument.
      *
      * @param instrument Instrument to play given file with.
@@ -80,15 +122,20 @@ public abstract class UserInterface {
 
         // what user wants to do
         boolean play = false;
-        boolean playlist = false;
+        boolean pause = false;
+        boolean resume = false;
+        boolean prev = false;
+        boolean next = false;
+        boolean stop = false;
         boolean canPlay = false;
         boolean quit = false;
+        int nOps = 0;
 
         String filename = "";
         Instrument instrument = null;
 
-        boolean stop = false;
-        for (int i = 0; !stop && i < args.length; i++) {
+        boolean exit = false;
+        for (int i = 0; !exit && i < args.length; i++) {
 
             String arg = args[i];
 
@@ -100,8 +147,9 @@ public abstract class UserInterface {
                         quit = true;
                     }
                     else {
-                        stop = true;
+                        exit = true;
                     }
+                    nOps++;
                     break;
                 }
 
@@ -113,21 +161,69 @@ public abstract class UserInterface {
                         // skip next arg (since it's the filename)
                         i++;
                     } else {
-                        stop = true;
+                        exit = true;
                     }
+                    nOps++;
                     break;
                 }
 
-                case CMD_PLAYLIST: {
+                case CMD_PAUSE: {
 
-                    if (i != args.length - 1) {
-                        filename = args[i + 1];
-                        playlist = true;
-                        // skip next arg (since it's the filename)
-                        i++;
-                    } else {
+                    if (i == 0 && args.length == 1) {
+                        pause = true;
+                    }
+                    else {
+                        exit = true;
+                    }
+                    nOps++;
+                    break;
+                }
+
+                case CMD_RESUME: {
+
+                    if (i == 0 && args.length == 1) {
+                        resume = true;
+                    }
+                    else {
+                        exit = true;
+                    }
+                    nOps++;
+                    break;
+                }
+
+                case CMD_STOP: {
+
+                    if (i == 0 && args.length == 1) {
                         stop = true;
                     }
+                    else {
+                        exit = true;
+                    }
+                    nOps++;
+                    break;
+                }
+
+                case CMD_PREV: {
+
+                    if (i == 0 && args.length == 1) {
+                        prev = true;
+                    }
+                    else {
+                        exit = true;
+                    }
+                    nOps++;
+                    break;
+                }
+
+                case CMD_NEXT: {
+
+                    if (i == 0 && args.length == 1) {
+                        next = true;
+                    }
+                    else {
+                        exit = true;
+                    }
+                    nOps++;
                     break;
                 }
 
@@ -139,8 +235,9 @@ public abstract class UserInterface {
                         // skip next arg (since it's the filename)
                         i++;
                     } else {
-                        stop = true;
+                        exit = true;
                     }
+                    nOps++;
                     break;
                 }
 
@@ -151,13 +248,13 @@ public abstract class UserInterface {
                         // skip next arg (since it's the instrument)
                         i++;
                     } else {
-                        stop = true;
+                        exit = true;
                     }
                     break;
                 }
 
                 default:
-                    stop = true;
+                    exit = true;
                     break;
             }
         }
@@ -165,13 +262,27 @@ public abstract class UserInterface {
         if (quit) {
             quit();
         }
-        else if (!stop && !filename.isEmpty() && !(play && canPlay && playlist)) {
+        else if (!exit && nOps == 1) {
 
-            if (play) play(instrument, filename);
-
-            if (playlist) playlist(instrument, filename);
+            if (play) {
+                if (filename.endsWith(".xml")) {
+                    playlist(instrument, filename);
+                } else {
+                    play(instrument, filename);
+                }
+            }
 
             if (canPlay) canPlay(instrument, filename);
+
+            if (pause) pause();
+
+            if (resume) resume();
+
+            if (stop) stop();
+
+            if (prev) prev();
+
+            if (next) next();
         }
         else {
             displayUsage();

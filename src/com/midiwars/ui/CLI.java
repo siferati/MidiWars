@@ -124,7 +124,7 @@ public class CLI extends UserInterface {
                 Thread.sleep(1000);
             }
 
-            app.play(instrument, filename, null);
+            app.play(instrument, filename, null, false);
         }
         catch (InterruptedException e) {
             System.out.println("\nERROR: Thread was interrupted while sleeping.");
@@ -147,6 +147,36 @@ public class CLI extends UserInterface {
 
     @Override
     public void playlist(Instrument instrument, String filename) {
+        System.out.println("\nThis command is invalid for the current application mode.");
+        displayUsage();
+    }
+
+    @Override
+    void pause() {
+        System.out.println("\nThis command is invalid for the current application mode.");
+        displayUsage();
+    }
+
+    @Override
+    void resume() {
+        System.out.println("\nThis command is invalid for the current application mode.");
+        displayUsage();
+    }
+
+    @Override
+    void stop() {
+        System.out.println("\nThis command is invalid for the current application mode.");
+        displayUsage();
+    }
+
+    @Override
+    void prev() {
+        System.out.println("\nThis command is invalid for the current application mode.");
+        displayUsage();
+    }
+
+    @Override
+    void next() {
         System.out.println("\nThis command is invalid for the current application mode.");
         displayUsage();
     }

@@ -21,6 +21,10 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 
+import static com.midiwars.logic.MidiWars.State.PAUSED;
+import static com.midiwars.logic.MidiWars.State.PLAYING;
+import static com.midiwars.logic.MidiWars.State.STOPPED;
+
 /**
  * Represents the application itself.
  */
@@ -40,14 +44,30 @@ public class MidiWars {
 
     }
 
+    public enum State {
+
+        /** Playback is active. */
+        PLAYING,
+
+        /** Playback is paused. */
+        PAUSED,
+
+        /** Playback is stopped. */
+        STOPPED
+
+    }
+
     /** Name of the window of the game. */
     public final static String GAME_WINDOW = "Guild Wars 2";
 
     /** Path to configurations file. */
     public static final String CONFIGPATH = "./config.xml";
 
+
     /* --- ATTRIBUTES --- */
 
+    /** True when the app is playing a midi file. */
+    private static volatile State state = STOPPED;
 
     /** JNA mapping of User32.dll functions. */
     private User32 user32;
@@ -75,7 +95,8 @@ public class MidiWars {
     }
 
 
-    /**
+    /** TODO quando playlist ja esta a tocar
+     * TODO restaurar contents da clipboard
      * Plays the given midi file.
      *
      * @param instrument Instrument to play given file with.
@@ -86,7 +107,9 @@ public class MidiWars {
      * @throws IOException Can't open file.
      * @throws AWTException If the platform configuration does not allow low-level input control.
      */
-    public void play(Instrument instrument, String filepath, Chat chat) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException {
+    public void play(Instrument instrument, String filepath, Chat chat, boolean playlist) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException {
+
+        if (!playlist) state = PLAYING;
 
         // TODO work only when guildwars is the active window - install alt tab hook
         // find guild wars window
@@ -111,9 +134,12 @@ public class MidiWars {
         // play
         MyRobot robot = new MyRobot(chat);
         instrument.play(midiTimeline, robot);
+
+        if (!playlist) state = STOPPED;
     }
 
-    /**
+
+    /** TODO quando playlist ja esta a tocar
      * Plays the given playlist.
      *
      * @param instrument Instrument to play given playlist with.
@@ -126,6 +152,8 @@ public class MidiWars {
      * @throws NullPointerException If playlist file doesn't have required format.
      */
     public void playlist(Instrument instrument, String filepath, Chat chat) throws ParserConfigurationException, IOException, SAXException, NullPointerException, MidifilesNotFoundException, AWTException, InvalidMidiDataException, GameNotRunningException, InterruptedException {
+
+        state = PLAYING;
 
         // setup doc
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -166,6 +194,66 @@ public class MidiWars {
         // play list
         playlist = new Playlist(midifiles, shuffle, repeat, instrument, chat);
         playlist.play(this);
+
+        state = STOPPED;
+    }
+
+
+    /**
+     * Getter.
+     *
+     * @return The current state of the app.
+     */
+    public static State getState() {
+        return state;
+    }
+
+
+    /** TODO keys are still pressed down during pause - need to release them all
+     * Pauses playback.
+     */
+    public void pause() {
+        state = PAUSED;
+    }
+
+
+    /**
+     * Resumes playback.
+     */
+    public void resume() {
+        state = PLAYING;
+    }
+
+
+    /** TODO make this fully stop (ie making sure threads die) instead of current function
+     * Stops playback.
+     */
+    public void stop() {
+        state = STOPPED;
+    }
+
+
+    /**
+     * Plays previous song.
+     */
+    public void prev() throws InterruptedException {
+        state = STOPPED;
+        if (playlist != null) {
+            playlist.prev();
+        }
+        state = PLAYING;
+    }
+
+
+    /**
+     * Plays the next song.
+     */
+    public void next() throws InterruptedException {
+        state = STOPPED;
+        if (playlist != null) {
+            playlist.next();
+        }
+        state = PLAYING;
     }
 
 

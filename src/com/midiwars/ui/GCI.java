@@ -103,7 +103,7 @@ public class GCI extends UserInterface {
     @Override
     public void play(Instrument instrument, String filename) {
         try {
-            app.play(instrument, filename, chat);
+            app.play(instrument, filename, chat, false);
         } catch (InvalidMidiDataException | IOException | AWTException | MidiWars.GameNotRunningException e) {
             // TODO
             e.printStackTrace();
@@ -120,6 +120,40 @@ public class GCI extends UserInterface {
         }
     }
 
+    @Override
+    void pause() {
+        app.pause();
+    }
+
+    @Override
+    void resume() {
+        app.resume();
+    }
+
+    @Override
+    void stop() {
+        app.stop();
+    }
+
+    @Override
+    void prev() {
+        try {
+            app.prev();
+        } catch (InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    void next() {
+        try {
+            app.next();
+        } catch (InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void canPlay(Instrument instrument, String filename) {

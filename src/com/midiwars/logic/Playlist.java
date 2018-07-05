@@ -2,6 +2,7 @@ package com.midiwars.logic;
 
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.ui.Chat;
+import com.midiwars.util.SyncInt;
 
 import javax.sound.midi.InvalidMidiDataException;
 import java.awt.*;
@@ -9,10 +10,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.midiwars.logic.MidiWars.State.STOPPED;
+
 /**
  * Represents a playlist of midi files to play.
  */
 public class Playlist {
+
+    private class PlayedMidifile {
+        public SyncInt index;
+        public String midifile;
+        public PlayedMidifile(SyncInt index, String midifile) {
+            this.index = index;
+            this.midifile = midifile;
+        }
+    }
 
     /* --- Defines --- */
 
@@ -30,6 +42,12 @@ public class Playlist {
     /** List of midi files of this playlist. */
     private ArrayList<String> midifiles;
 
+    /** List of midi files left to play on shuffle. */
+    private volatile ArrayList<String> leftMidifiles;
+
+    /** List of midifiles played so far on shuffle. */
+    private volatile ArrayList<PlayedMidifile> playedMidifiles;
+
     /** Instrument to play midi files with. */
     private Instrument instrument;
 
@@ -37,10 +55,7 @@ public class Playlist {
     private Chat chat;
 
     /** The file that's currently playing. */
-    private int iMidifile;
-
-    /** True if playlist is in play mode. */
-    private boolean playing;
+    private volatile SyncInt iMidifile;
 
 
     /* --- Methods --- */
@@ -52,8 +67,9 @@ public class Playlist {
         this.repeat = repeat;
         this.instrument = instrument;
         this.chat = chat;
-        iMidifile = 0;
-        playing = false;
+        iMidifile = new SyncInt(0);
+        leftMidifiles = new ArrayList<>();
+        playedMidifiles = new ArrayList<>();
     }
 
 
@@ -61,8 +77,6 @@ public class Playlist {
      * Starts playback.
      */
     public void play(MidiWars app) throws AWTException, InvalidMidiDataException, MidiWars.GameNotRunningException, IOException, InterruptedException {
-
-        playing = true;
 
         // prevent playing same file twice in a row when repeating shuffle
         String lastMidifilePlayed = "";
@@ -72,12 +86,24 @@ public class Playlist {
             // play midifiles in order
             if (!shuffle) {
 
-                for (iMidifile = 0; iMidifile < midifiles.size(); iMidifile++) {
+                for (iMidifile.set(0); iMidifile.get() < midifiles.size(); iMidifile.increment()) {
 
-                    app.play(instrument, midifiles.get(iMidifile), chat);
+                    app.play(instrument, midifiles.get(iMidifile.get()), chat, true);
+
+                    // check playback status
+                    boolean stopped = false;
+                    while (MidiWars.getState() == STOPPED) {
+                        Thread.onSpinWait();
+                        stopped = true;
+                    }
+
+                    // repeat song if stopped
+                    if (stopped) {
+                        iMidifile.decrement();
+                    }
 
                     // small break in-between songs
-                    if (repeat || iMidifile < midifiles.size() - 1) {
+                    if (!stopped && (repeat || iMidifile.get() < midifiles.size() - 1)) {
                         Thread.sleep(BREAK_DURATION);
                     }
                 }
@@ -85,54 +111,107 @@ public class Playlist {
             // play random midifiles
             else {
 
-                // list of midifiles left to play
-                ArrayList<String> leftMidifiles = new ArrayList<>(midifiles);
+                // resets
+                leftMidifiles = new ArrayList<>(midifiles);
+                playedMidifiles.clear();
+
+                // true if playback stopped
+                boolean stopped = false;
 
                 // play a random midifile
                 while (!leftMidifiles.isEmpty()) {
 
-                    // prevent playing same file twice in a row when repeating shuffle
-                    do {
-                        iMidifile = ThreadLocalRandom.current().nextInt(leftMidifiles.size());
-                    } while (leftMidifiles.get(iMidifile).equals(lastMidifilePlayed) && midifiles.size() > 1);
+                    // only swap song if didnt stop
+                    if (!stopped) {
 
-                    // play midifile and remove it from waiting list
-                    lastMidifilePlayed = leftMidifiles.get(iMidifile);
-                    app.play(instrument, lastMidifilePlayed, chat);
-                    leftMidifiles.remove(iMidifile);
+                        stopped = false;
 
-                    // small break in-between songs
-                    if (repeat || !leftMidifiles.isEmpty()) {
-                        Thread.sleep(BREAK_DURATION);
+                        // prevent playing same file twice in a row when repeating shuffle
+                        do {
+                            iMidifile.set(ThreadLocalRandom.current().nextInt(leftMidifiles.size()));
+                        } while (leftMidifiles.get(iMidifile.get()).equals(lastMidifilePlayed) && midifiles.size() > 1);
+                    }
+
+                    // play midifile
+                    lastMidifilePlayed = leftMidifiles.get(iMidifile.get());
+                    app.play(instrument, lastMidifilePlayed, chat, true);
+
+                    // check playback status
+                    while (MidiWars.getState() == STOPPED) {
+                        Thread.onSpinWait();
+                        stopped = true;
+                    }
+
+                    if (!stopped) {
+                        // remove song from waiting list
+                        leftMidifiles.remove(iMidifile.get());
+
+                        // add it to played list
+                        playedMidifiles.add(new PlayedMidifile(iMidifile, lastMidifilePlayed));
+
+                        // small break in-between songs
+                        if (repeat || !leftMidifiles.isEmpty()) {
+                            Thread.sleep(BREAK_DURATION);
+                        }
                     }
                 }
             }
         } while (repeat);
-
-        playing = false;
     }
 
 
     /**
-     * Resumes playback.
+     * Plays the next midi file.
      */
-    public void resume() {
+    public void next() throws InterruptedException {
 
+        // small break in-between songs
+        Thread.sleep(BREAK_DURATION);
+
+        if (!shuffle) {
+            if (iMidifile.get() >= midifiles.size() - 1) {
+                if (repeat) {
+                    iMidifile.set(0);
+                }
+            }
+            else {
+                iMidifile.increment();
+            }
+        }
+        else if (leftMidifiles.size() > 1) {
+
+            // remove song from waiting list and add it to played list
+            playedMidifiles.add(new PlayedMidifile(iMidifile, leftMidifiles.remove(iMidifile.get())));
+
+            // get next song
+            iMidifile.set(ThreadLocalRandom.current().nextInt(leftMidifiles.size()));
+        }
     }
 
-    public void pause() {
 
-    }
+    /**
+     * Plays previous midi file.
+     */
+    public void prev() throws InterruptedException {
 
-    public void stop() {
+        // small break in-between songs
+        Thread.sleep(BREAK_DURATION);
 
-    }
-
-    public void next() {
-
-    }
-
-    public void prev() {
-
+        if (!shuffle) {
+            if (iMidifile.get() <= 0) {
+                if (repeat) {
+                    iMidifile.set(midifiles.size() - 1);
+                }
+            }
+            else {
+                iMidifile.decrement();
+            }
+        }
+        else if (!playedMidifiles.isEmpty()) {
+            int iLast = playedMidifiles.size() - 1;
+            PlayedMidifile last = playedMidifiles.remove(iLast);
+            leftMidifiles.add(last.index.get(), last.midifile);
+            iMidifile.set(last.index.get());
+        }
     }
 }

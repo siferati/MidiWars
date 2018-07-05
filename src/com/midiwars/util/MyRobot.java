@@ -88,6 +88,9 @@ public class MyRobot extends Robot {
             StringSelection selection = new StringSelection(str);
             clipboard.setContents(selection, selection);
 
+            // prevent getting keyboard state while Ctrl and V are pressed.
+            chat.setHoldGetKeyboardState(true);
+
             // paste string to chat
             super.keyPress(VK_CONTROL);
             super.keyPress(VK_V);
@@ -98,6 +101,9 @@ public class MyRobot extends Robot {
             // release pressed keys
             keyRelease(VK_V);
             keyRelease(VK_CONTROL);
+
+            // allow getting keyboard state.
+            chat.setHoldGetKeyboardState(false);
 
             // adjust cursor position
             for (int i = cursor; i < str.length(); i++) {

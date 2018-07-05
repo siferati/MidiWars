@@ -1,12 +1,15 @@
 package com.midiwars.logic.instruments;
 
 import com.midiwars.logic.Keymap;
+import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.logic.midi.NoteEvent;
 import com.midiwars.util.MyRobot;
 
 import java.util.ArrayList;
 
+import static com.midiwars.logic.MidiWars.State.PAUSED;
+import static com.midiwars.logic.MidiWars.State.STOPPED;
 import static com.midiwars.logic.instruments.Instrument.Warning.*;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
@@ -117,6 +120,7 @@ public abstract class Instrument {
      * Plays the given midi timeline.
      *
      * @param midiTimeline Midi Timeline.
+     * @param robot Robot that will play the midi timeline.
      */
     public void play(MidiTimeline midiTimeline, MyRobot robot) {
 
@@ -128,6 +132,14 @@ public abstract class Instrument {
         this.robot = robot;
 
         for (int i = 0; i < timeline.size(); i++) {
+
+            // check playback status
+            while (MidiWars.getState() == PAUSED) {
+                Thread.onSpinWait();
+            }
+            if (MidiWars.getState() == STOPPED) {
+                break;
+            }
 
             // store start time for this event's processing
             long startTime = System.currentTimeMillis();

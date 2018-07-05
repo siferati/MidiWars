@@ -1,6 +1,7 @@
 package com.midiwars.ui;
 
 import com.midiwars.jna.MyUser32;
+import com.midiwars.logic.MidiWars;
 import com.midiwars.util.Pair;
 import com.midiwars.util.SyncBoolean;
 import com.sun.jna.platform.win32.WinUser;
@@ -57,54 +58,100 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
         public void run() {
 
             // prevent injected events from getting caught in the message loop
-            if (injected) {
+            // (for some reason, media keys are considered injected by the OS...)
+            if (injected && vkCode != WVK_MEDIA_NEXT_TRACK && vkCode != WVK_MEDIA_PREV_TRACK && vkCode != WVK_MEDIA_PLAY_PAUSE && vkCode != WVK_MEDIA_STOP) {
                 return;
             }
 
-            // (de)activate chat
-            if (vkCode == WVK_RETURN) {
-                if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+            switch (vkCode) {
 
-                    if (openChatHeldDown.get()) {
-                        // chat closes if key is held down
+                // (de)activate chat
+                case WVK_RETURN: {
+                    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+
+                        if (openChatHeldDown.get()) {
+                            // chat closes if key is held down
+                            open.set(false);
+                        } else {
+                            open.swap();
+                            openChatHeldDown.set(true);
+                        }
+
+                        // if chat is no longer opened
+                        if (!open.get()) {
+                            System.out.println("debug: CHAT CLOSED!");
+                            buildCmd();
+                        } else {
+                            System.out.println("debug: CHAT OPEN!");
+                        }
+                    }
+                    else if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
+                        openChatHeldDown.set(false);
+                    }
+                    break;
+                }
+
+                // close chat and loose what was being typed
+                case VK_ESCAPE: {
+                    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         open.set(false);
-                    } else {
-                        open.swap();
-                        openChatHeldDown.set(true);
-                    }
-
-                    // if chat is no longer opened
-                    if (!open.get()) {
+                        openChatHeldDown.set(false);
+                        synchronized (kbdEvents) {
+                            kbdEvents.clear();
+                        }
                         System.out.println("debug: CHAT CLOSED!");
-                        buildCmd();
-                    } else {
-                        System.out.println("debug: CHAT OPEN!");
                     }
+                    break;
                 }
-                else if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
-                    openChatHeldDown.set(false);
+
+                case WVK_MEDIA_PLAY_PAUSE: {
+                    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+                        if (MidiWars.getState() == MidiWars.State.PLAYING) {
+                            ui.pause();
+                        } else {
+                            ui.resume();
+                        }
+                    }
+                    break;
                 }
-            }
-            // close chat and loose what was being typed
-            else if (vkCode == VK_ESCAPE) {
-                if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
-                    open.set(false);
-                    openChatHeldDown.set(false);
+
+                case WVK_MEDIA_NEXT_TRACK: {
+                    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+                        ui.next();
+                    }
+                    break;
+                }
+
+                case WVK_MEDIA_PREV_TRACK: {
+                    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+                        ui.prev();
+                    }
+                    break;
+                }
+
+                case WVK_MEDIA_STOP: {
+                    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+                        ui.stop();
+                    }
+                    break;
+                }
+
+                // other keys
+                default: {
                     synchronized (kbdEvents) {
-                        kbdEvents.clear();
+
+                        while (holdGetKeyboardState) {
+                            Thread.onSpinWait();
+                        }
+
+                        // get current keyboard state
+                        user32.GetKeyboardState(lpKeyState);
+
+                        // store event
+                        kbdEvents.add(this);
                     }
-                    System.out.println("debug: CHAT CLOSED!");
-                }
-            }
-            // other keys
-            else if (open.get()) {
-                synchronized (kbdEvents) {
 
-                    // get current keyboard state
-                    user32.GetKeyboardState(lpKeyState);
-
-                    // store event
-                    kbdEvents.add(this);
+                    break;
                 }
             }
         }
@@ -132,11 +179,26 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     /** Delete virtual-key code (windows). */
     public static final int WVK_DELETE = 0x2E;
 
+    /** Next track virtual-key code (windows). */
+    public static final int WVK_MEDIA_NEXT_TRACK = 0xB0;
+
+    /** Previous track virtual-key code (windows). */
+    public static final int WVK_MEDIA_PREV_TRACK = 0xB1;
+
+    /** Stop media virtual-key code (windows). */
+    public static final int WVK_MEDIA_STOP = 0xB2;
+
+    /** Play / pause media virtual-key code (windows). */
+    public static final int WVK_MEDIA_PLAY_PAUSE = 0xB3;
+
     /** List of chars to ignore when building input command. */
     public static final char[] INVALID_CHARS = {'\0', '\t', '\b', '\n', '\r'};
 
 
     /* --- ATTRIBUTES --- */
+
+    /** True if GetKeyboardState can't be called at the moment. */
+    public volatile boolean holdGetKeyboardState;
 
     /** The user interface that owns this instance. */
     private UserInterface ui;
@@ -169,6 +231,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
         open = new SyncBoolean(false);
         openChatHeldDown = new SyncBoolean(false);
         kbdEvents = new ArrayList<>();
+        holdGetKeyboardState = false;
 
         // dll
         user32 = MyUser32.INSTANCE;
@@ -370,5 +433,15 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
      */
     public boolean isOpen() {
         return open.get();
+    }
+
+
+    /**
+     * Setter.
+     *
+     * @param holdGetKeyboardState New value for holdGetKeyboardState.
+     */
+    public void setHoldGetKeyboardState(boolean holdGetKeyboardState) {
+        this.holdGetKeyboardState = holdGetKeyboardState;
     }
 }
