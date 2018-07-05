@@ -7,6 +7,7 @@ import javax.sound.midi.InvalidMidiDataException;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Represents a playlist of midi files to play.
@@ -39,7 +40,7 @@ public class Playlist {
     private int iMidifile;
 
     /** True if playlist is in play mode. */
-    private boolean playing = false;
+    private boolean playing;
 
 
     /* --- Methods --- */
@@ -63,17 +64,48 @@ public class Playlist {
 
         playing = true;
 
+        // prevent playing same file twice in a row when repeating shuffle
+        String lastMidifilePlayed = "";
+
         do {
+
+            // play midifiles in order
             if (!shuffle) {
+
                 for (iMidifile = 0; iMidifile < midifiles.size(); iMidifile++) {
+
                     app.play(instrument, midifiles.get(iMidifile), chat);
+
                     // small break in-between songs
                     if (repeat || iMidifile < midifiles.size() - 1) {
                         Thread.sleep(BREAK_DURATION);
                     }
                 }
-            } else {
-                // TODO shuffle
+            }
+            // play random midifiles
+            else {
+
+                // list of midifiles left to play
+                ArrayList<String> leftMidifiles = new ArrayList<>(midifiles);
+
+                // play a random midifile
+                while (!leftMidifiles.isEmpty()) {
+
+                    // prevent playing same file twice in a row when repeating shuffle
+                    do {
+                        iMidifile = ThreadLocalRandom.current().nextInt(leftMidifiles.size());
+                    } while (leftMidifiles.get(iMidifile).equals(lastMidifilePlayed) && midifiles.size() > 1);
+
+                    // play midifile and remove it from waiting list
+                    lastMidifilePlayed = leftMidifiles.get(iMidifile);
+                    app.play(instrument, lastMidifilePlayed, chat);
+                    leftMidifiles.remove(iMidifile);
+
+                    // small break in-between songs
+                    if (repeat || !leftMidifiles.isEmpty()) {
+                        Thread.sleep(BREAK_DURATION);
+                    }
+                }
             }
         } while (repeat);
 
