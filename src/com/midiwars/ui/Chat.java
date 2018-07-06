@@ -1,13 +1,14 @@
 package com.midiwars.ui;
 
 import com.midiwars.jna.MyUser32;
-import com.midiwars.logic.MidiWars;
+import com.midiwars.logic.Player;
 import com.midiwars.util.Pair;
 import com.midiwars.util.SyncBoolean;
 import com.sun.jna.platform.win32.WinUser;
 
 import java.util.ArrayList;
 
+import static com.midiwars.logic.Player.State.PLAYING;
 import static com.sun.jna.Pointer.nativeValue;
 import static com.sun.jna.platform.win32.WinUser.*;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
@@ -53,6 +54,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
             this.lpKeyState = new byte[256];
             injected = (flags & LLKHF_INJECTED) == LLKHF_INJECTED;
         }
+
 
         @Override
         public void run() {
@@ -106,7 +108,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
                 case WVK_MEDIA_PLAY_PAUSE: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
-                        if (MidiWars.getState() == MidiWars.State.PLAYING) {
+                        if (Player.getInstance().getState() == PLAYING) {
                             ui.pause();
                         } else {
                             ui.resume();
@@ -138,19 +140,20 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
                 // other keys
                 default: {
-                    synchronized (kbdEvents) {
+                    if (open.get()) {
+                        synchronized (kbdEvents) {
 
-                        while (holdGetKeyboardState) {
-                            Thread.onSpinWait();
+                            while (holdGetKeyboardState) {
+                                Thread.onSpinWait();
+                            }
+
+                            // get current keyboard state
+                            user32.GetKeyboardState(lpKeyState);
+
+                            // store event
+                            kbdEvents.add(this);
                         }
-
-                        // get current keyboard state
-                        user32.GetKeyboardState(lpKeyState);
-
-                        // store event
-                        kbdEvents.add(this);
                     }
-
                     break;
                 }
             }
@@ -215,15 +218,38 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     /** DLL. */
     private final MyUser32 user32;
 
+    /** The instance. */
+    private static volatile Chat instance = null;
+
 
     /* --- METHODS --- */
 
     /**
-     * Creates a new Chat object.
+     * Initializes the instance.
      *
-     * @param ui The user interface that owns this instance.
+     * @param ui The user interface.
      */
-    public Chat(UserInterface ui) {
+    public synchronized static void init(UserInterface ui) {
+        if (instance == null) {
+            instance = new Chat(ui);
+        }
+    }
+
+
+    /**
+     * Get the instance.
+     *
+     * @return The instance.
+     */
+    public static Chat getInstance() {
+        return instance;
+    }
+
+
+    /**
+     * Creates a new Chat object.
+     */
+    private Chat(UserInterface ui) {
 
         this.ui = ui;
 

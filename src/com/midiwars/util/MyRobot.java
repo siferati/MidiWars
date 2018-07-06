@@ -29,14 +29,12 @@ public class MyRobot extends Robot {
     /**
      * Creates a new MyRobot object.
      *
-     * @param chat In-game chat.
-     *
      * @throws AWTException If the platform configuration does not allow low-level input control.
      */
-    public MyRobot(Chat chat) throws AWTException {
+    public MyRobot() throws AWTException {
         super();
         user32 = MyUser32.INSTANCE;
-        this.chat = chat;
+        this.chat = Chat.getInstance();
         if (chat == null) {
             clipboard = null;
         } else {

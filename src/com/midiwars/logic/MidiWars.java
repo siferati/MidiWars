@@ -21,11 +21,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 
-import static com.midiwars.logic.MidiWars.State.PAUSED;
-import static com.midiwars.logic.MidiWars.State.PLAYING;
-import static com.midiwars.logic.MidiWars.State.STOPPED;
-
-/**
+/** TODO semaphores for synchronization (instrument pause etc)
  * Represents the application itself.
  */
 public class MidiWars {
@@ -44,19 +40,6 @@ public class MidiWars {
 
     }
 
-    public enum State {
-
-        /** Playback is active. */
-        PLAYING,
-
-        /** Playback is paused. */
-        PAUSED,
-
-        /** Playback is stopped. */
-        STOPPED
-
-    }
-
     /** Name of the window of the game. */
     public final static String GAME_WINDOW = "Guild Wars 2";
 
@@ -65,9 +48,6 @@ public class MidiWars {
 
 
     /* --- ATTRIBUTES --- */
-
-    /** True when the app is playing a midi file. */
-    private static volatile State state = STOPPED;
 
     /** JNA mapping of User32.dll functions. */
     private User32 user32;
@@ -78,8 +58,8 @@ public class MidiWars {
     /** Default instrument. */
     private Instrument defaultInstrument;
 
-    /** The playlist that's currently playing. */
-    private Playlist playlist;
+    /** The music player. */
+    private Player player;
 
 
     /* --- METHODS --- */
@@ -92,24 +72,23 @@ public class MidiWars {
         user32 = User32.INSTANCE;
 
         loadConfigs();
+
+        player = Player.getInstance();
     }
 
 
-    /** TODO quando playlist ja esta a tocar
+    /**
      * TODO restaurar contents da clipboard
      * Plays the given midi file.
      *
      * @param instrument Instrument to play given file with.
      * @param filepath Path of midi file to play.
-     * @param chat The in-game chat.
      *
      * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
      * @throws AWTException If the platform configuration does not allow low-level input control.
      */
-    public void play(Instrument instrument, String filepath, Chat chat, boolean playlist) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException {
-
-        if (!playlist) state = PLAYING;
+    public void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException, InterruptedException {
 
         // TODO work only when guildwars is the active window - install alt tab hook
         // find guild wars window
@@ -123,37 +102,28 @@ public class MidiWars {
             // TODO uncomment throw new GameNotRunningException();
         }
 
-        // construct timeline from midi file
-        MidiTimeline midiTimeline = new MidiTimeline(midiPath + filepath);
-
         // default instrument
         if (instrument == null) {
             instrument = defaultInstrument;
         }
 
         // play
-        MyRobot robot = new MyRobot(chat);
-        instrument.play(midiTimeline, robot);
-
-        if (!playlist) state = STOPPED;
+        player.play(new String[] {midiPath + filepath}, false, false, instrument);
     }
 
 
-    /** TODO quando playlist ja esta a tocar
+    /**
      * Plays the given playlist.
      *
      * @param instrument Instrument to play given playlist with.
      * @param filepath Path of playlist to play.
-     * @param chat The in-game chat.
      *
      * @throws ParserConfigurationException If there was a configuration error within the parser.
      * @throws IOException If playlist file is missing.
      * @throws SAXException If couldn't parse playlist file.
      * @throws NullPointerException If playlist file doesn't have required format.
      */
-    public void playlist(Instrument instrument, String filepath, Chat chat) throws ParserConfigurationException, IOException, SAXException, NullPointerException, MidifilesNotFoundException, AWTException, InvalidMidiDataException, GameNotRunningException, InterruptedException {
-
-        state = PLAYING;
+    public void playlist(Instrument instrument, String filepath) throws ParserConfigurationException, IOException, SAXException, NullPointerException, MidifilesNotFoundException, AWTException, InvalidMidiDataException, GameNotRunningException, InterruptedException {
 
         // setup doc
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -162,10 +132,10 @@ public class MidiWars {
         Document doc = builder.parse(new File(midiPath + filepath));
 
         // get midifiles
-        ArrayList<String> midifiles = new ArrayList<>();
         NodeList nodeList = doc.getDocumentElement().getElementsByTagName("midifile");
+        String[] midifiles = new String[nodeList.getLength()];
         for (int i = 0; i < nodeList.getLength(); i++) {
-            midifiles.add(nodeList.item(i).getTextContent());
+            midifiles[i] = midiPath + nodeList.item(i).getTextContent();
         }
 
         // get options
@@ -185,75 +155,55 @@ public class MidiWars {
 
         // check if midifiles are valid
         for (String midifile : midifiles) {
-            File file = new File(midiPath + midifile);
+            File file = new File(midifile);
             if (!file.exists() || file.isDirectory()) {
                 throw new MidifilesNotFoundException();
             }
         }
 
         // play list
-        playlist = new Playlist(midifiles, shuffle, repeat, instrument, chat);
-        playlist.play(this);
-
-        state = STOPPED;
+        player.play(midifiles, shuffle, repeat, instrument);
     }
 
 
     /**
-     * Getter.
-     *
-     * @return The current state of the app.
-     */
-    public static State getState() {
-        return state;
-    }
-
-
-    /** TODO keys are still pressed down during pause - need to release them all
      * Pauses playback.
      */
     public void pause() {
-        state = PAUSED;
+        player.pause();
     }
 
 
     /**
      * Resumes playback.
      */
-    public void resume() {
-        state = PLAYING;
+    public void resume() throws AWTException, InvalidMidiDataException, InterruptedException, IOException {
+        player.resume();
+
     }
 
 
-    /** TODO make this fully stop (ie making sure threads die) instead of current function
+    /**
      * Stops playback.
      */
     public void stop() {
-        state = STOPPED;
+        player.stop();
     }
 
 
     /**
      * Plays previous song.
      */
-    public void prev() throws InterruptedException {
-        state = STOPPED;
-        if (playlist != null) {
-            playlist.prev();
-        }
-        state = PLAYING;
+    public void prev() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+        player.prev();
     }
 
 
     /**
      * Plays the next song.
      */
-    public void next() throws InterruptedException {
-        state = STOPPED;
-        if (playlist != null) {
-            playlist.next();
-        }
-        state = PLAYING;
+    public void next() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+        player.next();
     }
 
 

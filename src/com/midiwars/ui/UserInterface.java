@@ -62,7 +62,7 @@ public abstract class UserInterface {
      * Plays the songs listed in the given playlist.
      *
      * @param instrument Instrument to play given playlist with.
-     * @param filename Playlist to play.
+     * @param filename Player to play.
      */
     abstract void playlist(Instrument instrument, String filename);
 

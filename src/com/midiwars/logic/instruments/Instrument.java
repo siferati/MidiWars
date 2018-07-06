@@ -1,15 +1,16 @@
 package com.midiwars.logic.instruments;
 
 import com.midiwars.logic.Keymap;
-import com.midiwars.logic.MidiWars;
+import com.midiwars.logic.Player;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.logic.midi.NoteEvent;
 import com.midiwars.util.MyRobot;
 
+import java.awt.*;
 import java.util.ArrayList;
 
-import static com.midiwars.logic.MidiWars.State.PAUSED;
-import static com.midiwars.logic.MidiWars.State.STOPPED;
+import static com.midiwars.logic.Player.State.PAUSED;
+import static com.midiwars.logic.Player.State.STOPPED;
 import static com.midiwars.logic.instruments.Instrument.Warning.*;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
@@ -120,24 +121,36 @@ public abstract class Instrument {
      * Plays the given midi timeline.
      *
      * @param midiTimeline Midi Timeline.
-     * @param robot Robot that will play the midi timeline.
      */
-    public void play(MidiTimeline midiTimeline, MyRobot robot) {
+    public void play(MidiTimeline midiTimeline) throws AWTException {
+
+        robot = new MyRobot();
+        Player player = Player.getInstance();
 
         ArrayList<NoteEvent> timeline = midiTimeline.getTimeline();
 
         // reset initial states before playing
         activeKeybarIndex = idleKeybarIndex;
         previousKeybarChange = -1;
-        this.robot = robot;
 
         for (int i = 0; i < timeline.size(); i++) {
 
+            // TODO return on pause current index, so can stay paused without needing thread.
             // check playback status
-            while (MidiWars.getState() == PAUSED) {
+            while (player.getState() == PAUSED) {
+                if (heldKeybind > -1) {
+                    robot.keyRelease(heldKeybind);
+                    heldKeybind = -1;
+                }
                 Thread.onSpinWait();
             }
-            if (MidiWars.getState() == STOPPED) {
+            if (player.getState() == STOPPED) {
+                if (heldKeybind > -1) {
+                    robot.keyRelease(heldKeybind);
+                    heldKeybind = -1;
+                }
+                // return to idle keybar
+                changeKeybars(idleKeybarIndex);
                 break;
             }
 
@@ -384,6 +397,7 @@ public abstract class Instrument {
         // can't play this note
         return -1;
     }
+
 
     /**
      * Checks if the given midi timeline can be properly played by this instrument
