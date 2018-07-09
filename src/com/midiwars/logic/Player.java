@@ -38,7 +38,10 @@ public class Player {
     /* --- Defines --- */
 
     /** Amount of time (ms) to sleep in-between songs. */
-    public static int BREAK_DURATION = 3000;
+    public static final int BREAK_DURATION = 3000;
+
+    /** Amount of time (ms) to sleep when moving to next or previous song. */
+    public static final int SMALL_BREAK_DURATION = 500;
 
 
     /* --- Attrs --- */
@@ -64,6 +67,12 @@ public class Player {
     /** The file that's currently playing. */
     private volatile SyncInt currentSong;
 
+    /** Note (index) to resume playback from. */
+    private int resumeNote;
+
+    /** The thread that is currently playing. */
+    private Thread currentPlayingThread;
+
     /** The instance. */
     private static final Player instance = new Player();
 
@@ -80,8 +89,10 @@ public class Player {
         shuffle = false;
         repeat = false;
         playlist = null;
-        prevSong = "none";
+        prevSong = "";
         currentSong = new SyncInt(0);
+        resumeNote = 0;
+        currentPlayingThread = null;
     }
 
 
@@ -95,41 +106,50 @@ public class Player {
     }
 
 
-    /**
+    /** TODO restore clipboard contents
      * Resumes playback.
      */
     public void resume() throws AWTException, InvalidMidiDataException, IOException, InterruptedException {
 
-        // unless it was stopped, changing state to playing is enough
-        if (state != STOPPED) {
-            state = PLAYING;
+        if (state == PLAYING || currentPlayingThread != null) {
             return;
         }
 
+        currentPlayingThread = Thread.currentThread();
+
         state = PLAYING;
+
+        // true if this is loop's first iteration, false otherwise.
+        boolean firstIte = true;
 
         do {
 
             // shuffle playlist
-            if (shuffle && !prevSong.equals("")) shuffle();
+            if (shuffle && resumeNote == 0) shuffle(firstIte);
 
             for (; currentSong.get() < playlist.length; currentSong.increment()) {
 
-                System.out.println(playlist[currentSong.get()]);
+                // make sure it's a valid index
+                if (resumeNote < 0){
+                    resumeNote = 0;
+                }
+
+                // update
+                prevSong = playlist[currentSong.get()];
 
                 // construct timeline from midi file
                 MidiTimeline midiTimeline = new MidiTimeline(playlist[currentSong.get()]);
 
                 // play
-                instrument.play(midiTimeline);
+                resumeNote = instrument.play(midiTimeline, resumeNote);
 
-                // stop playback
-                if (state == STOPPED) {
+                // playback was stopped
+                if (resumeNote >= 0) {
                     return;
                 }
 
-                // update
-                prevSong = playlist[currentSong.get()];
+                // prepare next song
+                resumeNote = 0;
 
                 // small break in-between songs
                 if (repeat || currentSong.get() < playlist.length - 1) {
@@ -139,10 +159,13 @@ public class Player {
 
             // prepare repetition
             currentSong.set(0);
+            firstIte = false;
 
         } while (repeat);
 
         state = STOPPED;
+
+        currentPlayingThread = null;
     }
 
 
@@ -151,6 +174,11 @@ public class Player {
      */
     public void play(String[] playlist, boolean shuffle, boolean repeat, Instrument instrument) throws AWTException, InvalidMidiDataException, IOException, InterruptedException {
 
+        // stop playback
+        if (state == PLAYING) {
+            stop();
+        }
+
         // inits
         this.instrument = instrument;
         this.shuffle = shuffle;
@@ -158,19 +186,43 @@ public class Player {
         this.playlist = playlist;
         prevSong = "";
         currentSong = new SyncInt(0);
+        resumeNote = 0;
 
         // start playback
         resume();
     }
 
 
-    public void stop() {
+    /**
+     * Stops playback.
+     */
+    public void stop() throws InterruptedException {
+
         state = STOPPED;
-        prevSong = "none";
+
+        // wait for playing thread to terminate
+        if (currentPlayingThread != null) {
+            currentPlayingThread.join();
+            currentPlayingThread = null;
+        }
+
+        // needed in case player was paused
+        resumeNote = 0;
     }
 
-    public void pause() {
+
+    /**
+     * Pauses playback.
+     */
+    public void pause() throws InterruptedException {
+
         state = PAUSED;
+
+        // wait for playing thread to terminate
+        if (currentPlayingThread != null) {
+            currentPlayingThread.join();
+            currentPlayingThread = null;
+        }
     }
 
 
@@ -178,18 +230,19 @@ public class Player {
      * Shuffles the playlist,
      * following the Fisher–Yates shuffle algorithm.
      * Also sets currentSong to 0.
+     *
+     * @param repeat True if the previous song should be the first song in the playlist,
+     *               False if it should NOT be the first song in the playlist.
      */
-    private void shuffle() {
-
-        System.out.println("---------------");
+    private void shuffle(boolean repeat) {
 
         for (int i = 0; i < playlist.length - 1; i++) {
 
             int j = ThreadLocalRandom.current().nextInt(i, playlist.length);
             String temp = playlist[j];
 
-            // prevent repeating previous song when starting new shuffle
-            if (i == 0 && temp.equals(prevSong)) {
+            // make sure first song of playlist is as wanted
+            if (i == 0 && !prevSong.isEmpty() && (!repeat && temp.equals(prevSong) || repeat && !temp.equals(prevSong))) {
                 i--;
                 continue;
             }
@@ -204,31 +257,70 @@ public class Player {
 
 
     /**
-     * Plays the next midi file.
+     * Plays either the next or the previous midi file.
+     *
+     * @param next True to play next midi file, False to play previous midi file.
      */
-    public void next() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+    private void nextOrPrev(boolean next) throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
 
         if (playlist.length <= 1) {
             return;
         }
 
+        long startTime = System.currentTimeMillis();
+
         State oldState = state;
-        state = STOPPED;
 
-        // small break in-between songs
-        Thread.sleep(500);
+        // stop playback
+        stop();
 
-        if (currentSong.get() >= playlist.length - 1) {
-            currentSong.set(0);
+        // next song
+        if (next) {
+            if (currentSong.get() >= playlist.length - 1) {
+                currentSong.set(0);
+            }
+            else {
+                currentSong.increment();
+            }
+        }
+        // prev song
+        else {
+            if (currentSong.get() <= 0) {
+                currentSong.set(playlist.length - 1);
+            }
+            else {
+                currentSong.decrement();
+            }
+        }
+
+        // prevent shuffling
+        if (oldState != STOPPED) {
+            resumeNote = -1;
         }
         else {
-            currentSong.increment();
+            // update for shuffle
+            prevSong = playlist[currentSong.get()];
         }
 
-        prevSong = "";
-        if (oldState != STOPPED) {
+        // resume playback
+        if (oldState == PLAYING) {
+
+            // small break in-between songs
+            long sleep = SMALL_BREAK_DURATION - (System.currentTimeMillis() - startTime);
+            if (sleep > 0) {
+                Thread.sleep(sleep);
+            }
+
             resume();
         }
+    }
+
+
+    /**
+     * Plays the next midi file.
+     */
+    public void next() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+        nextOrPrev(true);
     }
 
 
@@ -236,27 +328,6 @@ public class Player {
      * Plays previous midi file.
      */
     public void prev() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
-
-        if (playlist.length <= 1) {
-            return;
-        }
-
-        State oldState = state;
-        state = STOPPED;
-
-        // small break in-between songs
-        Thread.sleep(500);
-
-        if (currentSong.get() <= 0) {
-            currentSong.set(playlist.length - 1);
-        }
-        else {
-            currentSong.decrement();
-        }
-
-        prevSong = "";
-        if (oldState != STOPPED) {
-            resume();
-        }
+        nextOrPrev(false);
     }
 }

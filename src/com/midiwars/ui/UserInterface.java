@@ -46,7 +46,7 @@ public abstract class UserInterface {
     /**
      * Displays to the user the usage information of the app.
      */
-    abstract void displayUsage();
+    protected abstract void displayUsage();
 
 
     /**
@@ -55,7 +55,7 @@ public abstract class UserInterface {
      * @param instrument Instrument to play given file with.
      * @param filename File to play.
      */
-    abstract void play(Instrument instrument, String filename);
+    public abstract void play(Instrument instrument, String filename);
 
 
     /**
@@ -64,37 +64,37 @@ public abstract class UserInterface {
      * @param instrument Instrument to play given playlist with.
      * @param filename Player to play.
      */
-    abstract void playlist(Instrument instrument, String filename);
+    public abstract void playlist(Instrument instrument, String filename);
 
 
     /**
      * Pauses the playback.
      */
-    abstract void pause();
+    public abstract void pause();
 
 
     /**
      * Resumes playback.
      */
-    abstract void resume();
+    public abstract void resume();
 
 
     /**
      * Stops playback.
      */
-    abstract void stop();
+    public abstract void stop();
 
 
     /**
      * Plays previous song.
      */
-    abstract void prev();
+    public abstract void prev();
 
 
     /**
      * Plays next song.
      */
-    abstract void next();
+    public abstract void next();
 
 
     /**
@@ -103,13 +103,13 @@ public abstract class UserInterface {
      * @param instrument Instrument to play given file with.
      * @param filename Name of midi file to play.
      */
-    abstract void canPlay(Instrument instrument, String filename);
+    public abstract void canPlay(Instrument instrument, String filename);
 
 
     /**
      * Exits the program.
      */
-    abstract void quit();
+    public abstract void quit();
 
 
     /**

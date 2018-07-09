@@ -152,31 +152,31 @@ public class CLI extends UserInterface {
     }
 
     @Override
-    void pause() {
+    public void pause() {
         System.out.println("\nThis command is invalid for the current application mode.");
         displayUsage();
     }
 
     @Override
-    void resume() {
+    public void resume() {
         System.out.println("\nThis command is invalid for the current application mode.");
         displayUsage();
     }
 
     @Override
-    void stop() {
+    public void stop() {
         System.out.println("\nThis command is invalid for the current application mode.");
         displayUsage();
     }
 
     @Override
-    void prev() {
+    public void prev() {
         System.out.println("\nThis command is invalid for the current application mode.");
         displayUsage();
     }
 
     @Override
-    void next() {
+    public void next() {
         System.out.println("\nThis command is invalid for the current application mode.");
         displayUsage();
     }

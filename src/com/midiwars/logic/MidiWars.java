@@ -5,8 +5,6 @@ import com.midiwars.logic.instruments.Instrument.*;
 import com.midiwars.logic.instruments.InstrumentFactory;
 import com.midiwars.logic.instruments.InstrumentFactory.*;
 import com.midiwars.logic.midi.MidiTimeline;
-import com.midiwars.ui.Chat;
-import com.midiwars.util.MyRobot;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import org.w3c.dom.Document;
@@ -21,7 +19,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 
-/** TODO semaphores for synchronization (instrument pause etc)
+/**
  * Represents the application itself.
  */
 public class MidiWars {
@@ -78,7 +76,6 @@ public class MidiWars {
 
 
     /**
-     * TODO restaurar contents da clipboard
      * Plays the given midi file.
      *
      * @param instrument Instrument to play given file with.
@@ -169,7 +166,7 @@ public class MidiWars {
     /**
      * Pauses playback.
      */
-    public void pause() {
+    public void pause() throws InterruptedException {
         player.pause();
     }
 
@@ -179,14 +176,13 @@ public class MidiWars {
      */
     public void resume() throws AWTException, InvalidMidiDataException, InterruptedException, IOException {
         player.resume();
-
     }
 
 
     /**
      * Stops playback.
      */
-    public void stop() {
+    public void stop() throws InterruptedException {
         player.stop();
     }
 

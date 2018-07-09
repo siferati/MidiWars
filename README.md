@@ -28,7 +28,7 @@
 * ~~In-game chat commands~~
 * ~~Typing while playing~~
 * ~~Allow filenames to have spaces~~
-* Playlist system
+* ~~Playlist system~~
   * ~~Setup (playlist.xml)~~
   * ~~Chat commands~~
   * ~~Media keys~~

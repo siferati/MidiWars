@@ -1,7 +1,7 @@
-package com.midiwars.ui;
+package com.midiwars.logic;
 
 import com.midiwars.jna.MyUser32;
-import com.midiwars.logic.Player;
+import com.midiwars.ui.UserInterface;
 import com.midiwars.util.Pair;
 import com.midiwars.util.SyncBoolean;
 import com.sun.jna.platform.win32.WinUser;
@@ -447,7 +447,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
         // parse arguments
         if (args.get(0).equals(UserInterface.CMD_GCI)) {
             args.remove(0);
-            new Thread(() -> ui.parse(args.toArray(new String[0]))).start();
+            ui.parse(args.toArray(new String[0]));
         }
     }
 

@@ -1,7 +1,7 @@
 package com.midiwars.util;
 
 import com.midiwars.jna.MyUser32;
-import com.midiwars.ui.Chat;
+import com.midiwars.logic.Chat;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;

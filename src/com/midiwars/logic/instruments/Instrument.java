@@ -48,7 +48,7 @@ public abstract class Instrument {
     public static final int NOTE_DURATION_LIMIT = 2250;
 
     /** Upper limit to a pause's duration (ms) - longer pauses are probably due to errors in the midi file. */
-    public static final int PAUSE_DURATION_LIMIT = 10000;
+    public static final int PAUSE_DURATION_LIMIT = 5000;
 
     /** Maximum amount of time (ms) Robot.delay() can sleep for. */
     public static final int ROBOT_MAX_SLEEP = 60000;
@@ -121,37 +121,34 @@ public abstract class Instrument {
      * Plays the given midi timeline.
      *
      * @param midiTimeline Midi Timeline.
+     * @param startNote Note (index) to start playback from.
+     *
+     * @return -1 If playback finished, next note (index) to play otherwise (ie playback was paused or stopped).
      */
-    public void play(MidiTimeline midiTimeline) throws AWTException {
+    public int play(MidiTimeline midiTimeline, int startNote) throws AWTException {
 
         robot = new MyRobot();
         Player player = Player.getInstance();
 
         ArrayList<NoteEvent> timeline = midiTimeline.getTimeline();
 
-        // reset initial states before playing
-        activeKeybarIndex = idleKeybarIndex;
-        previousKeybarChange = -1;
+        int i = startNote;
+        for (; i < timeline.size(); i++) {
 
-        for (int i = 0; i < timeline.size(); i++) {
+            // stop / pause playback
+            if (player.getState() == PAUSED || player.getState() == STOPPED) {
 
-            // TODO return on pause current index, so can stay paused without needing thread.
-            // check playback status
-            while (player.getState() == PAUSED) {
+                // release key
                 if (heldKeybind > -1) {
                     robot.keyRelease(heldKeybind);
                     heldKeybind = -1;
                 }
-                Thread.onSpinWait();
-            }
-            if (player.getState() == STOPPED) {
-                if (heldKeybind > -1) {
-                    robot.keyRelease(heldKeybind);
-                    heldKeybind = -1;
-                }
+
                 // return to idle keybar
-                changeKeybars(idleKeybarIndex);
-                break;
+                returnToIdleKeybar();
+
+                if (player.getState() == PAUSED) return i;
+                if (player.getState() == STOPPED) return 0;
             }
 
             // store start time for this event's processing
@@ -229,6 +226,16 @@ public abstract class Instrument {
         }
 
         // return to idle keybar
+        returnToIdleKeybar();
+
+        return -1;
+    }
+
+
+    /**
+     * Returns the instrument to the idle keybar.
+     */
+    public void returnToIdleKeybar() {
         changeKeybars(idleKeybarIndex);
     }
 
