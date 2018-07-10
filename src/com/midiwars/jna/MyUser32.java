@@ -5,7 +5,7 @@ import com.sun.jna.platform.win32.User32;
 import com.sun.jna.win32.W32APIOptions;
 
 /** TODO ToUnicode
- * Extension of JNA's user32.dll mapping.
+ * Extension of JNA's User32.dll mapping.
  */
 public interface MyUser32 extends User32 {
 

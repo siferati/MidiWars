@@ -59,15 +59,6 @@ public abstract class UserInterface {
 
 
     /**
-     * Plays the songs listed in the given playlist.
-     *
-     * @param instrument Instrument to play given playlist with.
-     * @param filename Player to play.
-     */
-    public abstract void playlist(Instrument instrument, String filename);
-
-
-    /**
      * Pauses the playback.
      */
     public abstract void pause();
@@ -264,13 +255,7 @@ public abstract class UserInterface {
         }
         else if (!exit && nOps == 1) {
 
-            if (play) {
-                if (filename.endsWith(".xml")) {
-                    playlist(instrument, filename);
-                } else {
-                    play(instrument, filename);
-                }
-            }
+            if (play) play(instrument, filename);
 
             if (canPlay) canPlay(instrument, filename);
 

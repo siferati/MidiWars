@@ -5,8 +5,6 @@ import com.midiwars.logic.instruments.Instrument.*;
 import com.midiwars.logic.instruments.InstrumentFactory;
 import com.midiwars.logic.instruments.InstrumentFactory.*;
 import com.midiwars.logic.midi.MidiTimeline;
-import com.sun.jna.platform.win32.User32;
-import com.sun.jna.platform.win32.WinDef;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -26,10 +24,6 @@ public class MidiWars {
 
     /* --- DEFINES --- */
 
-    public static class GameNotRunningException extends Exception {
-
-    }
-
     public static class MidiPathNotFoundException extends Exception {
 
     }
@@ -38,17 +32,11 @@ public class MidiWars {
 
     }
 
-    /** Name of the window of the game. */
-    public final static String GAME_WINDOW = "Guild Wars 2";
-
     /** Path to configurations file. */
     public static final String CONFIGPATH = "./config.xml";
 
 
     /* --- ATTRIBUTES --- */
-
-    /** JNA mapping of User32.dll functions. */
-    private User32 user32;
 
     /** Path to where midi files are stored. */
     private String midiPath;
@@ -67,8 +55,6 @@ public class MidiWars {
      */
     public MidiWars() throws IOException, SAXException, ParserConfigurationException, NullPointerException, InvalidInstrumentException, MidiPathNotFoundException {
 
-        user32 = User32.INSTANCE;
-
         loadConfigs();
 
         player = Player.getInstance();
@@ -76,90 +62,71 @@ public class MidiWars {
 
 
     /**
-     * Plays the given midi file.
+     * Plays the given midi file or playlist.
      *
-     * @param instrument Instrument to play given file with.
-     * @param filepath Path of midi file to play.
+     * @param instrument Instrument to play with.
+     * @param filename Name of midi file / playlist to play.
      *
      * @throws InvalidMidiDataException Midi file is invalid.
      * @throws IOException Can't open file.
      * @throws AWTException If the platform configuration does not allow low-level input control.
-     */
-    public void play(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException, AWTException, GameNotRunningException, InterruptedException {
-
-        // TODO work only when guildwars is the active window - install alt tab hook
-        // find guild wars window
-        WinDef.HWND gameWindow = user32.FindWindow(null, GAME_WINDOW);
-
-        // bring window to the front
-        if (gameWindow != null) {
-            // TODO uncomment user32.SetForegroundWindow(gameWindow);
-        }
-        else {
-            // TODO uncomment throw new GameNotRunningException();
-        }
-
-        // default instrument
-        if (instrument == null) {
-            instrument = defaultInstrument;
-        }
-
-        // play
-        player.play(new String[] {midiPath + filepath}, false, false, instrument);
-    }
-
-
-    /**
-     * Plays the given playlist.
-     *
-     * @param instrument Instrument to play given playlist with.
-     * @param filepath Path of playlist to play.
-     *
      * @throws ParserConfigurationException If there was a configuration error within the parser.
-     * @throws IOException If playlist file is missing.
      * @throws SAXException If couldn't parse playlist file.
      * @throws NullPointerException If playlist file doesn't have required format.
      */
-    public void playlist(Instrument instrument, String filepath) throws ParserConfigurationException, IOException, SAXException, NullPointerException, MidifilesNotFoundException, AWTException, InvalidMidiDataException, GameNotRunningException, InterruptedException {
+    public void play(Instrument instrument, String filename) throws InvalidMidiDataException, IOException, AWTException, InterruptedException, ParserConfigurationException, SAXException, MidifilesNotFoundException {
 
-        // setup doc
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setIgnoringElementContentWhitespace(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(new File(midiPath + filepath));
+        if (filename.endsWith(".xml")) {
 
-        // get midifiles
-        NodeList nodeList = doc.getDocumentElement().getElementsByTagName("midifile");
-        String[] midifiles = new String[nodeList.getLength()];
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            midifiles[i] = midiPath + nodeList.item(i).getTextContent();
-        }
+            // setup doc
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setIgnoringElementContentWhitespace(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new File(midiPath + filename));
 
-        // get options
-        boolean shuffle = doc.getDocumentElement().getElementsByTagName("shuffle").getLength() > 0;
-        boolean repeat = doc.getDocumentElement().getElementsByTagName("repeat").getLength() > 0;
-
-        // instrument priority: command > playlist > default
-        if (instrument == null) {
-            NodeList instruments = doc.getDocumentElement().getElementsByTagName("instrument");
-            if (instruments.getLength() > 0) {
-                instrument = InstrumentFactory.newInstrument(instruments.item(0).getTextContent());
+            // get midifiles
+            NodeList nodeList = doc.getDocumentElement().getElementsByTagName("midifile");
+            String[] midifiles = new String[nodeList.getLength()];
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                midifiles[i] = midiPath + nodeList.item(i).getTextContent();
             }
-        }
-        if (instrument == null) {
-            instrument = defaultInstrument;
-        }
 
-        // check if midifiles are valid
-        for (String midifile : midifiles) {
-            File file = new File(midifile);
-            if (!file.exists() || file.isDirectory()) {
-                throw new MidifilesNotFoundException();
+            // get options
+            boolean shuffle = doc.getDocumentElement().getElementsByTagName("shuffle").getLength() > 0;
+            boolean repeat = doc.getDocumentElement().getElementsByTagName("repeat").getLength() > 0;
+
+            // instrument priority: command > playlist > default
+            if (instrument == null) {
+                NodeList instruments = doc.getDocumentElement().getElementsByTagName("instrument");
+                if (instruments.getLength() > 0) {
+                    instrument = InstrumentFactory.newInstrument(instruments.item(0).getTextContent());
+                }
             }
-        }
+            if (instrument == null) {
+                instrument = defaultInstrument;
+            }
 
-        // play list
-        player.play(midifiles, shuffle, repeat, instrument);
+            // check if midifiles are valid
+            for (String midifile : midifiles) {
+                File file = new File(midifile);
+                if (!file.exists() || file.isDirectory()) {
+                    throw new MidifilesNotFoundException();
+                }
+            }
+
+            // play list
+            player.play(midifiles, shuffle, repeat, instrument);
+        }
+        else {
+
+            // default instrument
+            if (instrument == null) {
+                instrument = defaultInstrument;
+            }
+
+            // play
+            player.play(new String[] {midiPath + filename}, false, false, instrument);
+        }
     }
 
 

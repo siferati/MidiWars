@@ -1,17 +1,17 @@
 package com.midiwars.logic;
 
 import com.midiwars.jna.MyUser32;
+import com.sun.jna.platform.win32.WinUser;
 import com.midiwars.ui.UserInterface;
 import com.midiwars.util.Pair;
 import com.midiwars.util.SyncBoolean;
-import com.sun.jna.platform.win32.WinUser;
 
 import java.util.ArrayList;
 
+import static com.midiwars.jna.MyWinUser.*;
+
 import static com.midiwars.logic.Player.State.PLAYING;
 import static com.sun.jna.Pointer.nativeValue;
-import static com.sun.jna.platform.win32.WinUser.*;
-import static java.awt.event.KeyEvent.VK_ESCAPE;
 
 /**
  * Represents the in-game chat.
@@ -61,22 +61,22 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
             // prevent injected events from getting caught in the message loop
             // (for some reason, media keys are considered injected by the OS...)
-            if (injected && vkCode != WVK_MEDIA_NEXT_TRACK && vkCode != WVK_MEDIA_PREV_TRACK && vkCode != WVK_MEDIA_PLAY_PAUSE && vkCode != WVK_MEDIA_STOP) {
+            if (injected && vkCode != VK_MEDIA_NEXT_TRACK && vkCode != VK_MEDIA_PREV_TRACK && vkCode != VK_MEDIA_PLAY_PAUSE && vkCode != VK_MEDIA_STOP) {
                 return;
             }
 
             switch (vkCode) {
 
                 // (de)activate chat
-                case WVK_RETURN: {
+                case VK_RETURN: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
 
-                        if (openChatHeldDown.get()) {
+                        if (openChatHeldDown) {
                             // chat closes if key is held down
                             open.set(false);
                         } else {
                             open.swap();
-                            openChatHeldDown.set(true);
+                            openChatHeldDown = true;
                         }
 
                         // if chat is no longer opened
@@ -88,7 +88,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                         }
                     }
                     else if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
-                        openChatHeldDown.set(false);
+                        openChatHeldDown = false;
                     }
                     break;
                 }
@@ -97,7 +97,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                 case VK_ESCAPE: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         open.set(false);
-                        openChatHeldDown.set(false);
+                        openChatHeldDown = false;
                         synchronized (kbdEvents) {
                             kbdEvents.clear();
                         }
@@ -106,7 +106,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                     break;
                 }
 
-                case WVK_MEDIA_PLAY_PAUSE: {
+                case VK_MEDIA_PLAY_PAUSE: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         if (Player.getInstance().getState() == PLAYING) {
                             ui.pause();
@@ -117,21 +117,21 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                     break;
                 }
 
-                case WVK_MEDIA_NEXT_TRACK: {
+                case VK_MEDIA_NEXT_TRACK: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         ui.next();
                     }
                     break;
                 }
 
-                case WVK_MEDIA_PREV_TRACK: {
+                case VK_MEDIA_PREV_TRACK: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         ui.prev();
                     }
                     break;
                 }
 
-                case WVK_MEDIA_STOP: {
+                case VK_MEDIA_STOP: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         ui.stop();
                     }
@@ -143,6 +143,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                     if (open.get()) {
                         synchronized (kbdEvents) {
 
+                            // wait until it's safe
                             while (holdGetKeyboardState) {
                                 Thread.onSpinWait();
                             }
@@ -164,36 +165,6 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
     /* --- DEFINES --- */
 
-    /** Flag for inject keyboard events. */
-    public static final int LLKHF_INJECTED = 0x00000010;
-
-    /** Enter virtual-key code (windows). */
-    public static final int WVK_RETURN = 0x0D;
-
-    /** Left arrow virtual-key code (windows). */
-    public static final int WVK_LEFT = 0x25;
-
-    /** Right arrow virtual-key code (windows). */
-    public static final int WVK_RIGHT = 0x27;
-
-    /** Backspace virtual-key code (windows). */
-    public static final int WVK_BACK = 0x08;
-
-    /** Delete virtual-key code (windows). */
-    public static final int WVK_DELETE = 0x2E;
-
-    /** Next track virtual-key code (windows). */
-    public static final int WVK_MEDIA_NEXT_TRACK = 0xB0;
-
-    /** Previous track virtual-key code (windows). */
-    public static final int WVK_MEDIA_PREV_TRACK = 0xB1;
-
-    /** Stop media virtual-key code (windows). */
-    public static final int WVK_MEDIA_STOP = 0xB2;
-
-    /** Play / pause media virtual-key code (windows). */
-    public static final int WVK_MEDIA_PLAY_PAUSE = 0xB3;
-
     /** List of chars to ignore when building input command. */
     public static final char[] INVALID_CHARS = {'\0', '\t', '\b', '\n', '\r'};
 
@@ -209,8 +180,8 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     /** True if chat is opened, False otherwise. */
     private volatile SyncBoolean open;
 
-    /** True if the {@link #WVK_RETURN open chat} keybind is held down, False otherwise. */
-    private volatile SyncBoolean openChatHeldDown;
+    /** True if the open chat keybind is held down, False otherwise. */
+    private volatile boolean openChatHeldDown;
 
     /** List of keyboard events detected while chat was active. */
     private final ArrayList<KbdEvent> kbdEvents;
@@ -255,7 +226,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
         // inits
         open = new SyncBoolean(false);
-        openChatHeldDown = new SyncBoolean(false);
+        openChatHeldDown = false;
         kbdEvents = new ArrayList<>();
         holdGetKeyboardState = false;
 
@@ -317,19 +288,19 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                     // check for cursor movement and backspace/delete
                     switch (vkCode) {
 
-                        case WVK_LEFT:
+                        case VK_LEFT:
                             if (cursor > 0) cursor--;
                             break;
 
-                        case WVK_RIGHT:
+                        case VK_RIGHT:
                             if (cursor < strBuilder.length()) cursor++;
                             break;
 
-                        case WVK_BACK:
+                        case VK_BACK:
                             if (cursor > 0) strBuilder.deleteCharAt(--cursor);
                             break;
 
-                        case WVK_DELETE:
+                        case VK_DELETE:
                             if (cursor < strBuilder.length()) strBuilder.deleteCharAt(cursor);
                             break;
 

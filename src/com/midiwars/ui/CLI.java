@@ -115,6 +115,7 @@ public class CLI extends UserInterface {
     public void play(Instrument instrument, String filename) {
 
         try {
+
             // check playability
             canPlay(instrument, filename);
 
@@ -132,8 +133,15 @@ public class CLI extends UserInterface {
         catch (AWTException e) {
             System.out.println("\nERROR: Platform configuration does not allow low-level input control.");
         }
-        catch (MidiWars.GameNotRunningException e){
-            System.out.println("\nERROR: Couldn't find the game window. Please make sure the game is running and try again.");
+        catch (ParserConfigurationException e) {
+            System.out.println("\nERROR: There was a configuration error within the parser.");
+        }
+        catch (MidiWars.MidifilesNotFoundException e) {
+            System.out.println("\nCouldn't find the MIDI files listed in the playlist. Please provide valid filenames.");
+            displayUsage();
+        }
+        catch (SAXException e) {
+            System.out.println("\nERROR: Couldn't parse playlist file.");
         }
         catch (InvalidMidiDataException e) {
             System.out.println("\nInvalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
@@ -143,12 +151,6 @@ public class CLI extends UserInterface {
             System.out.println("\nCouldn't find the given MIDI file. Please provide a valid filename.");
             displayUsage();
         }
-    }
-
-    @Override
-    public void playlist(Instrument instrument, String filename) {
-        System.out.println("\nThis command is invalid for the current application mode.");
-        displayUsage();
     }
 
     @Override

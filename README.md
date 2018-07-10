@@ -32,7 +32,7 @@
   * ~~Setup (playlist.xml)~~
   * ~~Chat commands~~
   * ~~Media keys~~
-* Detect when game looses focus and pause the app
+* ~~Detect when game looses focus and pause the app~~
 * System tray
 * Check for updates on start
 * JavaDocs

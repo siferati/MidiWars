@@ -88,7 +88,7 @@ public class Player {
         instrument = null;
         shuffle = false;
         repeat = false;
-        playlist = null;
+        playlist = new String[0];
         prevSong = "";
         currentSong = new SyncInt(0);
         resumeNote = 0;
