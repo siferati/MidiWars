@@ -12,7 +12,7 @@ import static java.awt.event.KeyEvent.*;
 import static java.awt.event.KeyEvent.VK_ALT;
 import static java.awt.event.KeyEvent.VK_CONTROL;
 
-/**
+/** TODO move this to logic package
  * Synthesizes keyboard input events through the Windows Api.
  */
 public class MyRobot extends Robot {

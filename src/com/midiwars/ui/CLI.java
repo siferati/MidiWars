@@ -12,7 +12,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/**
+/** TODO syste exit on exception catches
  * Command line interface.
  */
 public class CLI extends UserInterface {
