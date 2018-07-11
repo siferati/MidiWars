@@ -33,7 +33,7 @@
   * ~~Chat commands~~
   * ~~Media keys~~
 * ~~Detect when game looses focus and pause the app~~
-* System tray
+* ~~System tray~~
 * Check for updates on start
 * JavaDocs
 * Test run

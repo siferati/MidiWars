@@ -10,6 +10,18 @@ public abstract class UserInterface {
 
     /* --- DEFINES --- */
 
+    /** Name of the window of the game. */
+    public final static String GAME_WINDOW = "Guild Wars 2";
+
+    /** Name of this application. */
+    public final static String APP_NAME = "Midi Wars";
+
+    /** The icon shown in the system tray when the app is active. */
+    public final static String ACTIVE_ICON = "green.png";
+
+    /** The icon shown in the system tray when the app is inactive. */
+    public final static String INACTIVE_ICON = "red.png";
+
     /** All commands coming from the in-game chat should start with this string. */
     public final static String CMD_GCI = "/mw";
 
@@ -41,7 +53,23 @@ public abstract class UserInterface {
     public final static String OPT_INST = "-inst";
 
 
+    /* --- ATTRS --- */
+
+    /** True if the game is the active window, False otherwise. */
+    protected static volatile boolean active = true;
+
+
     /* --- METHODS --- */
+
+    /**
+     * Getter.
+     *
+     * @return True if the game is the active window, False otherwise.
+     */
+    public static boolean isActive() {
+        return active;
+    }
+
 
     /**
      * Displays to the user the usage information of the app.

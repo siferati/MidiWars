@@ -2,6 +2,7 @@ package com.midiwars.util;
 
 import com.midiwars.jna.MyUser32;
 import com.midiwars.logic.Chat;
+import com.midiwars.ui.UserInterface;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -52,6 +53,10 @@ public class MyRobot extends Robot {
      */
     @Override
     public synchronized void keyPress(int keycode) {
+        if (!UserInterface.isActive()) {
+            return;
+        }
+
         if (chat == null || !chat.isOpen()) {
             super.keyPress(keycode);
             return;

@@ -28,16 +28,7 @@ import java.io.IOException;
  */
 public class GCI extends UserInterface implements WinUser.WinEventProc {
 
-    /* --- DEFINES --- */
-
-    /** Name of the window of the game. */
-    public final static String GAME_WINDOW = "Guild Wars 2";
-
-
     /* --- ATTRIBUTES --- */
-
-    /** True if the game is the active window, False otherwise. */
-    private volatile boolean active;
 
     /** Midi Wars app. */
     private MidiWars app;
@@ -49,7 +40,10 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
     private HANDLE hWinEventHook;
 
     /** DLL. */
-    private final MyUser32 user32;
+    private MyUser32 user32;
+
+    /** The icon shown in the system tray. */
+    private TrayIcon trayIcon;
 
 
     /* --- METHODS --- */
@@ -74,6 +68,14 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         HWND hwnd = user32.GetForegroundWindow();
         active = getWindowTitle(hwnd).equals(GAME_WINDOW);
 
+        // system tray icon
+        try {
+            trayIcon = addToSystemTray();
+        } catch (AWTException e) {
+            // TODO
+            e.printStackTrace();
+        }
+
         // install hooks and get their handles
         hHook = active ? user32.SetWindowsHookEx(WH_KEYBOARD_LL, Chat.getInstance(), null, 0) : null;
         hWinEventHook = user32.SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, null, this, 0, 0, WINEVENT_OUTOFCONTEXT);
@@ -93,6 +95,42 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
 
         // execution never gets this far
         quit();
+    }
+
+
+    /**
+     * Adds the app to the system tray.
+     *
+     * @return The icon shown in the system tray.
+     */
+    private TrayIcon addToSystemTray() throws AWTException {
+
+        if (!SystemTray.isSupported()) {
+            return null;
+        }
+
+        // popup menu
+        PopupMenu popup = new PopupMenu();
+        MenuItem item1 = new MenuItem("Quit");
+        item1.addActionListener(e -> quit());
+        popup.add(item1);
+
+        // load image
+        String filename = active ? ACTIVE_ICON : INACTIVE_ICON;
+        Image image = Toolkit.getDefaultToolkit().getImage(getClass().getClassLoader().getResource(filename));
+
+        // tooltip
+        String tooltip = active ? "(active)" : "(inactive)";
+        tooltip = APP_NAME + " " + tooltip;
+
+        // tray icon
+        TrayIcon trayIcon = new TrayIcon(image, tooltip, popup);
+        trayIcon.setImageAutoSize(true);
+
+        // add icon to system tray
+        SystemTray.getSystemTray().add(trayIcon);
+
+        return trayIcon;
     }
 
 
@@ -121,6 +159,8 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         // check if the game is the current foreground window
         active = getWindowTitle(hwnd).equals(GAME_WINDOW);
 
+        System.out.println(active);
+
         // stop playback and uninstall the hook
         if (!active) {
             pause();
@@ -131,7 +171,17 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         else {
             hHook = user32.SetWindowsHookEx(WH_KEYBOARD_LL, Chat.getInstance(), null, 0);
         }
+
+        // update tray icon image
+        String filename = active ? ACTIVE_ICON : INACTIVE_ICON;
+        trayIcon.setImage(Toolkit.getDefaultToolkit().getImage(getClass().getClassLoader().getResource(filename)));
+
+        // update tray icon tooltip
+        String tooltip = active ? "(active)" : "(inactive)";
+        tooltip = APP_NAME + " " + tooltip;
+        trayIcon.setToolTip(tooltip);
     }
+
 
     @Override
     public void displayUsage() {
@@ -206,6 +256,9 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
 
     @Override
     public void quit() {
+
+        active = false;
+
         try {
             app.stop();
         } catch (InterruptedException e) {
@@ -218,6 +271,7 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
             user32.UnhookWinEvent(hWinEventHook);
         }
 
+        SystemTray.getSystemTray().remove(trayIcon);
         System.exit(0);
     }
 }
