@@ -12,7 +12,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/** TODO syste exit on exception catches
+/**
  * Command line interface.
  */
 public class CLI extends UserInterface {
@@ -116,38 +116,25 @@ public class CLI extends UserInterface {
 
         try {
 
-            // check playability
-            canPlay(instrument, filename);
-
-            System.out.println("\nStarting playback in...");
-            for (int i = 0; i < 5; i++) {
-                System.out.println("... " + (5 - i));
-                Thread.sleep(1000);
-            }
+            System.out.println("Playback will start shortly. Please open");
 
             app.play(instrument, filename);
-        }
-        catch (InterruptedException e) {
+
+        } catch (InterruptedException e) {
             System.out.println("\nERROR: Thread was interrupted while sleeping.");
-        }
-        catch (AWTException e) {
+        } catch (AWTException e) {
             System.out.println("\nERROR: Platform configuration does not allow low-level input control.");
-        }
-        catch (ParserConfigurationException e) {
+        } catch (ParserConfigurationException e) {
             System.out.println("\nERROR: There was a configuration error within the parser.");
-        }
-        catch (MidiWars.MidifilesNotFoundException e) {
+        } catch (MidiWars.MidifilesNotFoundException e) {
             System.out.println("\nCouldn't find the MIDI files listed in the playlist. Please provide valid filenames.");
             displayUsage();
-        }
-        catch (SAXException e) {
+        } catch (SAXException e) {
             System.out.println("\nERROR: Couldn't parse playlist file.");
-        }
-        catch (InvalidMidiDataException e) {
+        } catch (InvalidMidiDataException e) {
             System.out.println("\nInvalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
             displayUsage();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.out.println("\nCouldn't find the given MIDI file. Please provide a valid filename.");
             displayUsage();
         }

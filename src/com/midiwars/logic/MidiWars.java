@@ -186,7 +186,7 @@ public class MidiWars {
     public ArrayList<Warning> canPlay(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
 
         // construct timeline from midi file
-        MidiTimeline midiTimeline = new MidiTimeline("C:\\Users\\Tirafesi\\Documents\\Guild Wars 2\\Midi Files\\" + filepath);
+        MidiTimeline midiTimeline = new MidiTimeline(midiPath + filepath);
 
         if (instrument == null) {
             instrument = defaultInstrument;
@@ -231,5 +231,15 @@ public class MidiWars {
         if (defaultInstrument == null) {
             throw new InvalidInstrumentException();
         }
+    }
+
+
+    /**
+     * Getter.
+     *
+     * @return Midipath.
+     */
+    public String getMidiPath() {
+        return midiPath;
     }
 }

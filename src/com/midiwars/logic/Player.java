@@ -2,6 +2,7 @@ package com.midiwars.logic;
 
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.midi.MidiTimeline;
+import com.midiwars.ui.UserInterface;
 import com.midiwars.util.SyncInt;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -136,6 +137,11 @@ public class Player {
 
                 // update
                 prevSong = playlist[currentSong.get()];
+
+                // check for warnings
+                if (resumeNote == 0) {
+                    UserInterface.getInstance().canPlay(instrument, prevSong);
+                }
 
                 // construct timeline from midi file
                 MidiTimeline midiTimeline = new MidiTimeline(playlist[currentSong.get()]);

@@ -2,6 +2,9 @@ package com.midiwars.ui;
 
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.InstrumentFactory;
+import com.midiwars.util.MyExceptions.UIAlreadyExists;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** TODO picocli
  * Represents a user interface.
@@ -56,18 +59,43 @@ public abstract class UserInterface {
     /* --- ATTRS --- */
 
     /** True if the game is the active window, False otherwise. */
-    protected static volatile boolean active = true;
+    protected final AtomicBoolean active;
+
+    /**
+     * The instance.
+     */
+    protected static volatile UserInterface instance;
 
 
     /* --- METHODS --- */
+
+    /**
+     * Return the instance.
+     *
+     * @return The instance.
+     */
+    public static UserInterface getInstance() { return instance; }
+
+
+    /**
+     * Creates a new UserInterface object.
+     */
+    protected UserInterface() {
+
+        active = new AtomicBoolean(true);
+
+        if (instance != null) throw new UIAlreadyExists();
+        else instance = this;
+    }
+
 
     /**
      * Getter.
      *
      * @return True if the game is the active window, False otherwise.
      */
-    public static boolean isActive() {
-        return active;
+    public boolean isActive() {
+        return active.get();
     }
 
 

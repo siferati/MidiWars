@@ -190,21 +190,10 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     private final MyUser32 user32;
 
     /** The instance. */
-    private static volatile Chat instance = null;
+    private static final Chat instance = new Chat();
 
 
     /* --- METHODS --- */
-
-    /**
-     * Initializes the instance.
-     *
-     * @param ui The user interface.
-     */
-    public synchronized static void init(UserInterface ui) {
-        if (instance == null) {
-            instance = new Chat(ui);
-        }
-    }
 
 
     /**
@@ -220,9 +209,9 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     /**
      * Creates a new Chat object.
      */
-    private Chat(UserInterface ui) {
+    private Chat() {
 
-        this.ui = ui;
+        this.ui = UserInterface.getInstance();
 
         // inits
         open = new SyncBoolean(false);

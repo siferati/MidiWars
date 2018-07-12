@@ -62,37 +62,33 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
 
             // inits
             app = new MidiWars();
-            Chat.init(this);
 
             // dll
             user32 = MyUser32.INSTANCE;
 
             // check if the game is the current foreground window
             HWND hwnd = user32.GetForegroundWindow();
-            active = getWindowTitle(hwnd).equals(GAME_WINDOW);
+            active.set(getWindowTitle(hwnd).equals(GAME_WINDOW));
 
             // system tray icon
             trayIcon = addToSystemTray();
 
-        } catch (AWTException | InvalidInstrumentException | IOException | MidiPathNotFoundException | ParserConfigurationException | SAXException e) {
-
-            String msg;
-
-            if (e instanceof AWTException) msg = "Couldn't add application to the system tray - desktop system tray is missing.";
-            else if (e instanceof InvalidInstrumentException) msg = "Default instrument listed in the configurations file is invalid.";
-            else if (e instanceof IOException) msg = "Configurations file is missing.";
-            else if (e instanceof MidiPathNotFoundException) msg = "Default path listed in the configurations file is invalid.";
-            else if (e instanceof ParserConfigurationException) msg = "There was a configuration error within the parser.";
-            else msg = "Couldn't parse configurations file.";
-
-            trayIcon.displayMessage("Application exit", msg, ERROR);
-
-            freeSystemResources();
-            System.exit(1);
+        } catch (AWTException e) {
+            displayError(true, "Couldn't add application to the system tray.\nDesktop system tray is missing.");
+        } catch (InvalidInstrumentException e) {
+            displayError(true, "Default instrument listed in the configurations file is invalid.");
+        } catch (IOException e) {
+            displayError(true, "Configurations file is missing.");
+        } catch (MidiPathNotFoundException e) {
+            displayError(true, "Default path listed in the configurations file is invalid.");
+        } catch (ParserConfigurationException e) {
+            displayError(true, "There was a configuration error within the parser.");
+        } catch (SAXException e) {
+            displayError(true, "Couldn't parse configurations file.");
         }
 
         // install hooks and get their handles
-        hHook = active ? user32.SetWindowsHookEx(WH_KEYBOARD_LL, Chat.getInstance(), null, 0) : null;
+        hHook = active.get() ? user32.SetWindowsHookEx(WH_KEYBOARD_LL, Chat.getInstance(), null, 0) : null;
         hWinEventHook = user32.SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, null, this, 0, 0, WINEVENT_OUTOFCONTEXT);
 
 
@@ -114,6 +110,66 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
 
 
     /**
+     * Displays the given error message.
+     *
+     * @param crit True if it's a critical error and the app should shutdown.
+     * @param msg Message to display.
+     */
+    private void displayError(boolean crit, String msg) {
+
+        String caption = crit ? "Critical Error" : "Error";
+
+        if (trayIcon != null) {
+            trayIcon.displayMessage(caption, msg, NONE);
+        } else {
+            System.out.println(caption + ": " + msg);
+        }
+
+        if (crit) {
+            freeSystemResources();
+            System.exit(1);
+        }
+    }
+
+
+    /**
+     * Displays the given warnings.
+     *
+     * @param warnings List of warnings to display.
+     */
+    public void displayWarnings(ArrayList<Warning> warnings ) {
+
+        StringBuilder strBuilder = new StringBuilder();
+
+        for (Warning warning: warnings) {
+            switch (warning) {
+                case NOT_IN_RANGE:
+                    strBuilder.append("\nSome notes are unplayable.");
+                    break;
+                case TEMPO_TOO_FAST:
+                    strBuilder.append("\nTempo is too fast.");
+                    break;
+                case NOTES_TOO_LONG:
+                    strBuilder.append("\nSome notes are too long.");
+                    break;
+                case PAUSES_TOO_LONG:
+                    strBuilder.append("\nSome pauses are too long.");
+                    break;
+                default:
+                    strBuilder.append("\nUnknown warning.");
+                    break;
+            }
+        }
+
+        if (trayIcon != null) {
+            trayIcon.displayMessage("Warning", strBuilder.substring(1), NONE);
+        } else {
+            System.out.println("Warning: " + strBuilder.substring(1));
+        }
+    }
+
+
+    /**
      * Adds the app to the system tray.
      *
      * @return The icon shown in the system tray.
@@ -130,22 +186,27 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         item1.addActionListener(e -> quit());
         popup.add(item1);
 
-        // load image
-        String filename = active ? ACTIVE_ICON : INACTIVE_ICON;
-        Image image = Toolkit.getDefaultToolkit().getImage(getClass().getClassLoader().getResource(filename));
+        Image image;
+        String tooltip;
+        synchronized (active) {
 
-        // tooltip
-        String tooltip = active ? "(active)" : "(inactive)";
-        tooltip = APP_NAME + " " + tooltip;
+            // load image
+            String filename = active.get() ? ACTIVE_ICON : INACTIVE_ICON;
+            image = Toolkit.getDefaultToolkit().getImage(getClass().getClassLoader().getResource(filename));
 
-        // tray icon
-        TrayIcon trayIcon = new TrayIcon(image, tooltip, popup);
-        trayIcon.setImageAutoSize(true);
+            // tooltip
+            tooltip = active.get() ? "(active)" : "(inactive)";
+            tooltip = APP_NAME + " " + tooltip;
 
-        // add icon to system tray
-        SystemTray.getSystemTray().add(trayIcon);
+            // tray icon
+            TrayIcon trayIcon = new TrayIcon(image, tooltip, popup);
+            trayIcon.setImageAutoSize(true);
 
-        return trayIcon;
+            // add icon to system tray
+            SystemTray.getSystemTray().add(trayIcon);
+
+            return trayIcon;
+        }
     }
 
 
@@ -171,62 +232,69 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
             return;
         }
 
-        // check if the game is the current foreground window
-        active = getWindowTitle(hwnd).equals(GAME_WINDOW);
+        synchronized (active) {
 
-        // stop playback and uninstall the hook
-        if (!active) {
-            pause();
-            user32.UnhookWindowsHookEx(hHook);
-            hHook = null;
+            // no need to do stuff if value of active didn't change
+            boolean newActive = getWindowTitle(hwnd).equals(GAME_WINDOW);
+            if (newActive == active.get()) {
+                return;
+            }
+
+            // check if the game is the current foreground window
+            active.set(newActive);
+
+            // pause playback and uninstall the hook
+            if (!active.get()) {
+                pause();
+                user32.UnhookWindowsHookEx(hHook);
+                hHook = null;
+            }
+            // re-install the hook
+            else {
+                hHook = user32.SetWindowsHookEx(WH_KEYBOARD_LL, Chat.getInstance(), null, 0);
+            }
+
+            // update tray icon image
+            String filename = active.get() ? ACTIVE_ICON : INACTIVE_ICON;
+            trayIcon.setImage(Toolkit.getDefaultToolkit().getImage(getClass().getClassLoader().getResource(filename)));
+
+            // update tray icon tooltip
+            String tooltip = active.get() ? "(active)" : "(inactive)";
+            tooltip = APP_NAME + " " + tooltip;
+            trayIcon.setToolTip(tooltip);
         }
-        // re-install the hook
-        else {
-            hHook = user32.SetWindowsHookEx(WH_KEYBOARD_LL, Chat.getInstance(), null, 0);
-        }
-
-        // update tray icon image
-        String filename = active ? ACTIVE_ICON : INACTIVE_ICON;
-        trayIcon.setImage(Toolkit.getDefaultToolkit().getImage(getClass().getClassLoader().getResource(filename)));
-
-        // update tray icon tooltip
-        String tooltip = active ? "(active)" : "(inactive)";
-        tooltip = APP_NAME + " " + tooltip;
-        trayIcon.setToolTip(tooltip);
     }
 
 
     @Override
     public void displayUsage() {
-        // TODO
+
+        if (trayIcon != null) {
+            trayIcon.displayMessage("Invalid command", "Usage: /mw <command> [options]", NONE);
+        } else {
+            System.out.println("Invalid command. Usage: /mw <command> [options]");
+        }
     }
 
 
     @Override
     public void play(Instrument instrument, String filename) {
-
         try {
-
-            canPlay(instrument, filename, false);
-
             app.play(instrument, filename);
-
-        } catch (AWTException | InterruptedException | InvalidMidiDataException | IOException | MidifilesNotFoundException | ParserConfigurationException | SAXException e) {
-
-            String msg;
-
-            if (e instanceof AWTException) msg = "Platform configuration does not allow low-level input control.";
-            else if (e instanceof InterruptedException) msg = "A thread was interrupted.";
-            else if (e instanceof InvalidMidiDataException) msg = "Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.";
-            else if (e instanceof IOException) msg = "Couldn't find the given MIDI file. Please provide a valid filename.";
-            else if (e instanceof MidifilesNotFoundException) msg = "Couldn't find the MIDI files listed in the playlist. Please provide valid filenames.";
-            else if (e instanceof ParserConfigurationException) msg = "There was a configuration error within the parser.";
-            else msg = "Couldn't parse playlist file.";
-
-            trayIcon.displayMessage("An error occurred", msg, ERROR);
-
-            freeSystemResources();
-            System.exit(1);
+        } catch (AWTException e) {
+            displayError(true, "Platform configuration does not allow low-level input control.");
+        } catch (InterruptedException e) {
+            displayError(true, "A thread was interrupted.");
+        } catch (InvalidMidiDataException e) {
+            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+        } catch (IOException e) {
+            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
+        } catch (MidifilesNotFoundException e) {
+            displayError(false, "Couldn't find the MIDI files listed in the playlist.\nPlease provide valid filenames.");
+        } catch (ParserConfigurationException e) {
+            displayError(false, "There was a configuration error within the parser.");
+        } catch (SAXException e) {
+            displayError(false, "Couldn't parse playlist file.");
         }
     }
 
@@ -236,161 +304,90 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         try {
             app.pause();
         } catch (InterruptedException e) {
-            trayIcon.displayMessage("An error occurred", "A thread was interrupted.", ERROR);
-            System.exit(1);
+            displayError(true, "A thread was interrupted.");
         }
     }
 
 
     @Override
     public void resume() {
-
         try {
-
             app.resume();
-
-        } catch (AWTException | InterruptedException | InvalidMidiDataException | IOException e) {
-
-            String msg;
-
-            if (e instanceof AWTException) msg = "Platform configuration does not allow low-level input control.";
-            else if (e instanceof InterruptedException) msg = "A thread was interrupted.";
-            else if (e instanceof InvalidMidiDataException) msg = "Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.";
-            else msg = "Couldn't find the given MIDI file. Please provide a valid filename.";
-
-            trayIcon.displayMessage("An error occurred", msg, ERROR);
-
-            freeSystemResources();
-            System.exit(1);
+        } catch (AWTException e) {
+            displayError(true, "Platform configuration does not allow low-level input control.");
+        } catch (InterruptedException e) {
+            displayError(true, "A thread was interrupted.");
+        } catch (InvalidMidiDataException e) {
+            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+        } catch (IOException e) {
+            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
         }
     }
 
 
     @Override
     public void stop() {
-
         try {
-
             app.stop();
-
         } catch (InterruptedException e) {
-
-            trayIcon.displayMessage("An error occurred", "A thread was interrupted.", ERROR);
-
-            freeSystemResources();
-            System.exit(1);
+            displayError(true, "A thread was interrupted.");
         }
     }
 
 
     @Override
     public void prev() {
-
         try {
-
             app.prev();
-
-        } catch (AWTException | InterruptedException | InvalidMidiDataException | IOException e) {
-
-            String msg;
-
-            if (e instanceof AWTException) msg = "Platform configuration does not allow low-level input control.";
-            else if (e instanceof InterruptedException) msg = "A thread was interrupted.";
-            else if (e instanceof InvalidMidiDataException) msg = "Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.";
-            else msg = "Couldn't find the given MIDI file. Please provide a valid filename.";
-
-            trayIcon.displayMessage("An error occurred", msg, ERROR);
-
-            freeSystemResources();
-            System.exit(1);
+        } catch (AWTException e) {
+            displayError(true, "Platform configuration does not allow low-level input control.");
+        } catch (InterruptedException e) {
+            displayError(true, "A thread was interrupted.");
+        } catch (InvalidMidiDataException e) {
+            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+        } catch (IOException e) {
+            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
         }
     }
 
 
     @Override
     public void next() {
-
         try {
-
             app.next();
-
-        } catch (AWTException | InterruptedException | InvalidMidiDataException | IOException e) {
-
-            String msg;
-
-            if (e instanceof AWTException) msg = "Platform configuration does not allow low-level input control.";
-            else if (e instanceof InterruptedException) msg = "A thread was interrupted.";
-            else if (e instanceof InvalidMidiDataException) msg = "Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.";
-            else msg = "Couldn't find the given MIDI file. Please provide a valid filename.";
-
-            trayIcon.displayMessage("An error occurred", msg, ERROR);
-
-            freeSystemResources();
-            System.exit(1);
-        }
-    }
-
-
-    /** TODO for loop in case its playlist
-     * Checks if the given midi file can be played by the given instrument.
-     *
-     * @param instrument Instrument to play given file with.
-     * @param filename Name of midi file to play.
-     * @param outside True if this was called from the outside (ie user), False otherwise.
-     */
-    private void canPlay(Instrument instrument, String filename, boolean outside) {
-
-        try {
-
-            ArrayList<Warning> warnings = app.canPlay(instrument, filename);
-
-            if (warnings.size() == 0 && outside) {
-                trayIcon.displayMessage("No problems found", "MIDI file is ready for playback.", NONE);
-                return;
-            }
-
-            StringBuilder strBuilder = new StringBuilder();
-
-            for (Warning warning: warnings) {
-                switch (warning) {
-                    case NOT_IN_RANGE:
-                        strBuilder.append("\nSome notes are unplayable.");
-                        break;
-                    case TEMPO_TOO_FAST:
-                        strBuilder.append("\nTempo is too fast.");
-                        break;
-                    case NOTES_TOO_LONG:
-                        strBuilder.append("\nSome notes are too long.");
-                        break;
-                    case PAUSES_TOO_LONG:
-                        strBuilder.append("\nSome pauses are too long.");
-                        break;
-                    default:
-                        strBuilder.append("\nUnknown warning.");
-                        break;
-                }
-            }
-
-            trayIcon.displayMessage("Warning", strBuilder.substring(1), WARNING);
-
-        } catch (InvalidMidiDataException | IOException e) {
-
-            String msg;
-
-            if (e instanceof InvalidMidiDataException) msg = "Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.";
-            else msg = "Couldn't find the given MIDI file. Please provide a valid filename.";
-
-            trayIcon.displayMessage("An error occurred", msg, ERROR);
-
-            freeSystemResources();
-            System.exit(1);
+        } catch (AWTException e) {
+            displayError(true, "Platform configuration does not allow low-level input control.");
+        } catch (InterruptedException e) {
+            displayError(true, "A thread was interrupted.");
+        } catch (InvalidMidiDataException e) {
+            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+        } catch (IOException e) {
+            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
         }
     }
 
 
     @Override
     public void canPlay(Instrument instrument, String filename) {
-        canPlay(instrument, filename, true);
+
+        // in case this call came from the player,
+        // the filename has the path attached to it
+        if (filename.startsWith(app.getMidiPath())) {
+            filename = filename.replace(app.getMidiPath(), "");
+        }
+
+        try {
+            ArrayList<Warning> warnings = app.canPlay(instrument, filename);
+            if (warnings.size() == 0) {
+                trayIcon.displayMessage("No problems found", "MIDI file is ready for playback.", NONE);
+            } else {
+                displayWarnings(warnings);
+            }
+        } catch (InvalidMidiDataException e) {
+            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+        } catch (IOException e) {
+            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
+        }
     }
 
 
@@ -408,15 +405,15 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
     @Override
     public void quit() {
 
-        active = false;
+        active.set(false);
 
         try {
             app.stop();
         } catch (InterruptedException e) {
-            trayIcon.displayMessage("An error occurred", "A thread was interrupted.", ERROR);
-            freeSystemResources();
-            System.exit(1);
+            displayError(true, "A thread was interrupted.");
         }
+
+        if (trayIcon != null) trayIcon.displayMessage("Application exit", "Goodbye.", NONE);
 
         freeSystemResources();
         System.exit(0);

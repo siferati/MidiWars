@@ -53,7 +53,7 @@ public class MyRobot extends Robot {
      */
     @Override
     public synchronized void keyPress(int keycode) {
-        if (!UserInterface.isActive()) {
+        if (!UserInterface.getInstance().isActive()) {
             return;
         }
 
