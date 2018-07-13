@@ -34,7 +34,7 @@
   * ~~Media keys~~
 * ~~Detect when game looses focus and pause the app~~
 * ~~System tray~~
-* Check OS on start
+* ~~Check OS on start~~
 * Check for updates on start
 * Pack configs.xml into the .jar
 * JavaDocs & code review
