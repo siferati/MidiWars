@@ -1,19 +1,19 @@
-package com.midiwars.util;
+package com.midiwars.logic;
 
 import com.midiwars.jna.MyUser32;
-import com.midiwars.logic.Chat;
+import com.midiwars.ui.gci.Chat;
 import com.midiwars.ui.UserInterface;
+import com.midiwars.util.Pair;
 
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 
 import static java.awt.event.KeyEvent.*;
 import static java.awt.event.KeyEvent.VK_ALT;
 import static java.awt.event.KeyEvent.VK_CONTROL;
 
-/** TODO move this to logic package
- * Synthesizes keyboard input events through the Windows Api.
+/**
+ * Synthesizes keyboard input events.
  */
 public class MyRobot extends Robot {
 
@@ -22,9 +22,6 @@ public class MyRobot extends Robot {
 
     /** DLL. */
     private final MyUser32 user32;
-
-    /** The system clipboard. */
-    private final Clipboard clipboard;
 
 
     /**
@@ -36,11 +33,6 @@ public class MyRobot extends Robot {
         super();
         user32 = MyUser32.INSTANCE;
         this.chat = Chat.getInstance();
-        if (chat == null) {
-            clipboard = null;
-        } else {
-            clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        }
     }
 
 
@@ -57,7 +49,7 @@ public class MyRobot extends Robot {
             return;
         }
 
-        if (chat == null || !chat.isOpen()) {
+        if (!chat.isOpen()) {
             super.keyPress(keycode);
             return;
         }
@@ -89,7 +81,7 @@ public class MyRobot extends Robot {
 
             // copy string to type to clipboard
             StringSelection selection = new StringSelection(str);
-            clipboard.setContents(selection, selection);
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
 
             // prevent getting keyboard state while Ctrl and V are pressed.
             chat.setHoldGetKeyboardState(true);

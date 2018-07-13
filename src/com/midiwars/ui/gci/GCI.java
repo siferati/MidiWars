@@ -1,4 +1,4 @@
-package com.midiwars.ui;
+package com.midiwars.ui.gci;
 
 import static com.midiwars.jna.MyWinUser.WINEVENT_OUTOFCONTEXT;
 import static com.midiwars.jna.MyWinUser.EVENT_SYSTEM_FOREGROUND;
@@ -6,13 +6,13 @@ import static com.sun.jna.platform.win32.WinUser.WH_KEYBOARD_LL;
 import static java.awt.TrayIcon.MessageType.*;
 
 import com.midiwars.jna.MyUser32;
-import com.midiwars.logic.Chat;
 import com.midiwars.logic.MidiWars;
-import com.midiwars.logic.MidiWars.MidiPathNotFoundException;
-import com.midiwars.logic.MidiWars.MidifilesNotFoundException;
+import com.midiwars.ui.UserInterface;
+import com.midiwars.util.MyExceptions.MidiPathNotFoundException;
+import com.midiwars.util.MyExceptions.MidifilesNotFoundException;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.Instrument.Warning;
-import com.midiwars.logic.instruments.InstrumentFactory.InvalidInstrumentException;
+import com.midiwars.util.MyExceptions.InvalidInstrumentException;
 import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinDef.LONG;
 import com.sun.jna.platform.win32.WinDef.HWND;
@@ -28,7 +28,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/** TODO move all custom exceptions to util package
+/**
  * Game Chat Interface.
  */
 public class GCI extends UserInterface implements WinUser.WinEventProc {
@@ -139,6 +139,10 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
      */
     public void displayWarnings(ArrayList<Warning> warnings ) {
 
+        if (warnings.size() == 0) {
+            return;
+        }
+
         StringBuilder strBuilder = new StringBuilder();
 
         for (Warning warning: warnings) {
@@ -182,9 +186,9 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
 
         // popup menu
         PopupMenu popup = new PopupMenu();
-        MenuItem item1 = new MenuItem("Quit");
-        item1.addActionListener(e -> quit());
-        popup.add(item1);
+        MenuItem item = new MenuItem("quit");
+        item.addActionListener(e -> quit());
+        popup.add(item);
 
         Image image;
         String tooltip;
@@ -366,19 +370,16 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         }
     }
 
-
     @Override
-    public void canPlay(Instrument instrument, String filename) {
+    public void canPlay(Instrument instrument, String filename, boolean explicit) {
 
-        // in case this call came from the player,
-        // the filename has the path attached to it
-        if (filename.startsWith(app.getMidiPath())) {
+        if (!explicit) {
             filename = filename.replace(app.getMidiPath(), "");
         }
 
         try {
             ArrayList<Warning> warnings = app.canPlay(instrument, filename);
-            if (warnings.size() == 0) {
+            if (warnings.size() == 0 && explicit) {
                 trayIcon.displayMessage("No problems found", "MIDI file is ready for playback.", NONE);
             } else {
                 displayWarnings(warnings);

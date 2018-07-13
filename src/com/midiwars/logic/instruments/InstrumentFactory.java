@@ -6,13 +6,6 @@ package com.midiwars.logic.instruments;
 public class InstrumentFactory {
 
     /**
-     * Thrown when the default instrument in the configurations file is invalid.
-     */
-    public static class InvalidInstrumentException extends Exception {
-
-    }
-
-    /**
      * Returns a new instrument of given name.
      *
      * @param name Name of the instrument.

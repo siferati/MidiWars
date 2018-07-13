@@ -1,7 +1,7 @@
 package com.midiwars;
 
-import com.midiwars.ui.CLI;
-import com.midiwars.ui.GCI;
+import com.midiwars.ui.cli.CLI;
+import com.midiwars.ui.gci.GCI;
 
 /**
  * Entry point for the application.

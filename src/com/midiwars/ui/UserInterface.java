@@ -6,7 +6,7 @@ import com.midiwars.util.MyExceptions.UIAlreadyExists;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** TODO picocli
+/**
  * Represents a user interface.
  */
 public abstract class UserInterface {
@@ -149,8 +149,9 @@ public abstract class UserInterface {
      *
      * @param instrument Instrument to play given file with.
      * @param filename Name of midi file to play.
+     * @param explicit True if this was explicitly called by the user, False otherwise.
      */
-    public abstract void canPlay(Instrument instrument, String filename);
+    public abstract void canPlay(Instrument instrument, String filename, boolean explicit);
 
 
     /**
@@ -313,7 +314,7 @@ public abstract class UserInterface {
 
             if (play) play(instrument, filename);
 
-            if (canPlay) canPlay(instrument, filename);
+            if (canPlay) canPlay(instrument, filename,true);
 
             if (pause) pause();
 

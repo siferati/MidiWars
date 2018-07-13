@@ -4,7 +4,7 @@ import com.midiwars.logic.Keymap;
 import com.midiwars.logic.Player;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.logic.midi.NoteEvent;
-import com.midiwars.util.MyRobot;
+import com.midiwars.logic.MyRobot;
 
 import java.awt.*;
 import java.util.ArrayList;

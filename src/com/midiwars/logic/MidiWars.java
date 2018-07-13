@@ -3,7 +3,9 @@ package com.midiwars.logic;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.Instrument.*;
 import com.midiwars.logic.instruments.InstrumentFactory;
-import com.midiwars.logic.instruments.InstrumentFactory.*;
+import com.midiwars.util.MyExceptions.InvalidInstrumentException;
+import com.midiwars.util.MyExceptions.MidiPathNotFoundException;
+import com.midiwars.util.MyExceptions.MidifilesNotFoundException;
 import com.midiwars.logic.midi.MidiTimeline;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -23,14 +25,6 @@ import java.util.ArrayList;
 public class MidiWars {
 
     /* --- DEFINES --- */
-
-    public static class MidiPathNotFoundException extends Exception {
-
-    }
-
-    public static class MidifilesNotFoundException extends Exception {
-
-    }
 
     /** Path to configurations file. */
     public static final String CONFIGPATH = "./config.xml";

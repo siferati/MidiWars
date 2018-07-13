@@ -1,9 +1,12 @@
-package com.midiwars.ui;
+package com.midiwars.ui.cli;
 
 import com.midiwars.logic.MidiWars;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.instruments.Instrument.Warning;
-import com.midiwars.logic.instruments.InstrumentFactory;
+import com.midiwars.ui.UserInterface;
+import com.midiwars.util.MyExceptions.InvalidInstrumentException;
+import com.midiwars.util.MyExceptions.MidifilesNotFoundException;
+import com.midiwars.util.MyExceptions.MidiPathNotFoundException;
 import org.xml.sax.SAXException;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -39,10 +42,10 @@ public class CLI extends UserInterface {
         catch (NullPointerException e) {
             System.out.println("\nERROR: Configurations file doesn't have required format.");
         }
-        catch (InstrumentFactory.InvalidInstrumentException e) {
+        catch (InvalidInstrumentException e) {
             System.out.println("\nERROR: Default instrument listed in the configurations file is invalid.");
         }
-        catch (MidiWars.MidiPathNotFoundException e) {
+        catch (MidiPathNotFoundException e) {
             System.out.println("\nERROR: Default path listed in the configurations file is invalid.");
         }
         catch (SAXException e) {
@@ -68,11 +71,15 @@ public class CLI extends UserInterface {
 
 
     @Override
-    public void canPlay(Instrument instrument, String filename) {
+    public void canPlay(Instrument instrument, String filename, boolean explicit) {
 
         try {
 
             System.out.println("\nChecking playability...");
+
+            if (!explicit) {
+                filename = filename.replace(app.getMidiPath(), "");
+            }
 
             ArrayList<Warning> warnings = app.canPlay(instrument, filename);
 
@@ -96,7 +103,7 @@ public class CLI extends UserInterface {
                 }
             }
 
-            if (warnings.size() == 0) {
+            if (warnings.size() == 0 && explicit) {
                 System.out.println("\nNo problems found. MIDI file is ready for playback.");
             }
         }
@@ -126,7 +133,7 @@ public class CLI extends UserInterface {
             System.out.println("\nERROR: Platform configuration does not allow low-level input control.");
         } catch (ParserConfigurationException e) {
             System.out.println("\nERROR: There was a configuration error within the parser.");
-        } catch (MidiWars.MidifilesNotFoundException e) {
+        } catch (MidifilesNotFoundException e) {
             System.out.println("\nCouldn't find the MIDI files listed in the playlist. Please provide valid filenames.");
             displayUsage();
         } catch (SAXException e) {

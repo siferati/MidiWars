@@ -1,6 +1,7 @@
-package com.midiwars.logic;
+package com.midiwars.ui.gci;
 
 import com.midiwars.jna.MyUser32;
+import com.midiwars.logic.Player;
 import com.sun.jna.platform.win32.WinUser;
 import com.midiwars.ui.UserInterface;
 import com.midiwars.util.Pair;
@@ -249,7 +250,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     }
 
 
-    /** TODO when insert mode is turned on
+    /**
      * Builds a string from the stored keyboard events.
      *
      * @return String built from the stored keyboard events.

@@ -7,6 +7,7 @@ import com.midiwars.util.SyncInt;
 
 import javax.sound.midi.InvalidMidiDataException;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -74,6 +75,9 @@ public class Player {
     /** The thread that is currently playing. */
     private Thread currentPlayingThread;
 
+    /** The previous contents of the clipboard prior to playing. */
+    private Transferable prevClipboardContents;
+
     /** The instance. */
     private static final Player instance = new Player();
 
@@ -94,6 +98,7 @@ public class Player {
         currentSong = new SyncInt(0);
         resumeNote = 0;
         currentPlayingThread = null;
+        prevClipboardContents = null;
     }
 
 
@@ -107,7 +112,7 @@ public class Player {
     }
 
 
-    /** TODO restore clipboard contents
+    /**
      * Resumes playback.
      */
     public void resume() throws AWTException, InvalidMidiDataException, IOException, InterruptedException {
@@ -117,6 +122,7 @@ public class Player {
         }
 
         currentPlayingThread = Thread.currentThread();
+        prevClipboardContents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 
         state = PLAYING;
 
@@ -140,7 +146,7 @@ public class Player {
 
                 // check for warnings
                 if (resumeNote == 0) {
-                    UserInterface.getInstance().canPlay(instrument, prevSong);
+                    UserInterface.getInstance().canPlay(instrument, prevSong, false);
                 }
 
                 // construct timeline from midi file
@@ -172,6 +178,7 @@ public class Player {
         state = STOPPED;
 
         currentPlayingThread = null;
+        if (prevClipboardContents != null) Toolkit.getDefaultToolkit().getSystemClipboard().setContents(prevClipboardContents, null);
     }
 
 
@@ -212,6 +219,8 @@ public class Player {
             currentPlayingThread = null;
         }
 
+        if (prevClipboardContents != null) Toolkit.getDefaultToolkit().getSystemClipboard().setContents(prevClipboardContents, null);
+
         // needed in case player was paused
         resumeNote = 0;
     }
@@ -229,6 +238,8 @@ public class Player {
             currentPlayingThread.join();
             currentPlayingThread = null;
         }
+
+        if (prevClipboardContents != null) Toolkit.getDefaultToolkit().getSystemClipboard().setContents(prevClipboardContents, null);
     }
 
 
