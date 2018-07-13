@@ -5,6 +5,7 @@
       <element id="module-output" name="MidiWars" />
       <element id="extracted-dir" path="$PROJECT_DIR$/libs/jna-4.5.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/libs/jna-platform-4.5.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/json-20180130.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

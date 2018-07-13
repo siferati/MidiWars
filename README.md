@@ -35,8 +35,8 @@
 * ~~Detect when game looses focus and pause the app~~
 * ~~System tray~~
 * ~~Check OS on start~~
-* Check for updates on start
+* ~~Check for updates on start~~
 * Pack configs.xml into the .jar
-* JavaDocs & code review
+* JavaDocs & code review & code cleanup (debug messages etc)
 * Test run (cli + gci)
 * Setup repository for release
