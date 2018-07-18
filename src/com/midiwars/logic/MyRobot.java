@@ -65,7 +65,6 @@ public class MyRobot extends Robot {
 
         // block input and release modifiers
         chat.block();
-        user32.BlockInput(true);
         releaseModifiers();
 
         // close chat
@@ -111,8 +110,7 @@ public class MyRobot extends Robot {
                 super.keyRelease(VK_LEFT);
             }
         }
-        
-        user32.BlockInput(false);
+
         chat.unblock();
     }
 

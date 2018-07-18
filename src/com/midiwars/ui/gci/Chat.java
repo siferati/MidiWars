@@ -59,8 +59,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
             injected = (kbdStruct.flags & LLKHF_INJECTED) == LLKHF_INJECTED;
         }
 
-
-        // TODO Esc doesn't close the chat if playing (it cancels animation instead)
+        
         @Override
         public void run() {
 
@@ -72,7 +71,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
             // if the input is blocked, key up events don't get through,
             // so the keys stay pressed forever. This prevents that.
-            if (blocked.get() && (msg == WM_KEYUP || msg == WM_SYSKEYUP)) {
+            if (blocked.get() && vkCode != VK_ESCAPE && vkCode != VK_RETURN && (msg == WM_KEYUP || msg == WM_SYSKEYUP)) {
                 synchronized (blockedKeyupEvents) {
                     blockedKeyupEvents.add(kbdStruct);
                 }
@@ -82,6 +81,10 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
                 // (de)activate chat
                 case VK_RETURN: {
+                    if (blocked.get()) {
+                        break;
+                    }
+
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
 
                         if (openChatHeldDown.get()) {
@@ -113,6 +116,10 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
                 // close chat and loose what was being typed
                 case VK_ESCAPE: {
+                    if (blocked.get()) {
+                        break;
+                    }
+
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         open.set(false);
                         openChatHeldDown.set(false);
@@ -464,6 +471,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
      */
     public void block() {
         blocked.set(true);
+        user32.BlockInput(true);
     }
 
 
@@ -472,6 +480,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
      * and releases all stored blocked keyup events.
      */
     public void unblock() {
+        user32.BlockInput(false);
         blocked.set(false);
         synchronized (blockedKeyupEvents) {
             for (KBDLLHOOKSTRUCT kbdStruct : blockedKeyupEvents) {
