@@ -16,7 +16,7 @@ import static com.midiwars.logic.Player.State.PLAYING;
 import static com.midiwars.logic.Player.State.STOPPED;
 
 /**
- * Represents a music player for midi files.
+ * A music player for midi files. (Singleton)
  */
 public class Player {
 
@@ -37,7 +37,7 @@ public class Player {
     } // State
 
 
-    /* --- Defines --- */
+    /* --- DEFINES --- */
 
     /** Amount of time (ms) to sleep in-between songs. */
     public static final int BREAK_DURATION = 3000;
@@ -46,7 +46,7 @@ public class Player {
     public static final int SMALL_BREAK_DURATION = 500;
 
 
-    /* --- Attrs --- */
+    /* --- ATTRIBUTES --- */
 
     /** True when playback is active. */
     private volatile State state = STOPPED;
@@ -82,12 +82,21 @@ public class Player {
     private static final Player instance = new Player();
 
 
-    /* --- Methods --- */
+    /* --- METHODS --- */
 
+    /**
+     * Getter.
+     *
+     * @return The {@link #instance}.
+     */
     public static Player getInstance() {
         return instance;
     }
 
+
+    /**
+     * Creates a new Player object.
+     */
     private Player() {
 
         instrument = null;
@@ -105,7 +114,7 @@ public class Player {
     /**
      * Getter.
      *
-     * @return The current state of the app.
+     * @return The current {@link #state} of the app.
      */
     public State getState() {
         return state;
@@ -114,8 +123,13 @@ public class Player {
 
     /**
      * Resumes playback.
+     *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      */
-    public void resume() throws AWTException, InvalidMidiDataException, IOException, InterruptedException {
+    public void resume() throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
 
         if (state == PLAYING || currentPlayingThread != null) {
             return;
@@ -184,8 +198,18 @@ public class Player {
 
     /**
      * Starts playback.
+     *
+     * @param playlist Playlist to play.
+     * @param shuffle True if player should switch to shuffle mode.
+     * @param repeat True if playlist should repeat upon ending.
+     * @param instrument Instrument to play given playlist with.
+     *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      */
-    public void play(String[] playlist, boolean shuffle, boolean repeat, Instrument instrument) throws AWTException, InvalidMidiDataException, IOException, InterruptedException {
+    public void play(String[] playlist, boolean shuffle, boolean repeat, Instrument instrument) throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
 
         // stop playback
         if (state == PLAYING) {
@@ -208,6 +232,8 @@ public class Player {
 
     /**
      * Stops playback.
+     *
+     * @throws InterruptedException If a thread was interrupted.
      */
     public void stop() throws InterruptedException {
 
@@ -228,6 +254,8 @@ public class Player {
 
     /**
      * Pauses playback.
+     *
+     * @throws InterruptedException If a thread was interrupted.
      */
     public void pause() throws InterruptedException {
 
@@ -276,9 +304,14 @@ public class Player {
     /**
      * Plays either the next or the previous midi file.
      *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
+     *
      * @param next True to play next midi file, False to play previous midi file.
      */
-    private void nextOrPrev(boolean next) throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+    private void nextOrPrev(boolean next) throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
 
         if (playlist.length <= 1) {
             return;
@@ -334,17 +367,27 @@ public class Player {
 
 
     /**
-     * Plays the next midi file.
+     * Plays the next song.
+     *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      */
-    public void next() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+    public void next() throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
         nextOrPrev(true);
     }
 
 
     /**
-     * Plays previous midi file.
+     * Plays previous song.
+     *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      */
-    public void prev() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+    public void prev() throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
         nextOrPrev(false);
     }
 }

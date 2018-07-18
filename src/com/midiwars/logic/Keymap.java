@@ -3,7 +3,7 @@ package com.midiwars.logic;
 import static java.awt.event.KeyEvent.*;
 
 /**
- * This maps key bar slots to keybinds
+ * Maps key bar slots to keybinds.
  */
 public abstract class Keymap {
 

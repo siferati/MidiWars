@@ -17,12 +17,16 @@ import static java.awt.event.KeyEvent.VK_CONTROL;
  */
 public class MyRobot extends Robot {
 
+    /* --- ATTRIBUTES --- */
+
     /** The in-game chat. */
     private Chat chat;
 
     /** DLL. */
     private final MyUser32 user32;
 
+
+    /* --- METHODS --- */
 
     /**
      * Creates a new MyRobot object.

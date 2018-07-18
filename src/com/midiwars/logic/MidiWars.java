@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 /**
- * Represents the application itself.
+ * The application itself.
  */
 public class MidiWars {
 
@@ -47,9 +47,16 @@ public class MidiWars {
     /* --- METHODS --- */
 
     /**
-     * Default Constructor.
+     * Creates a new MidiWars object.
+     *
+     * @throws InvalidInstrumentException If default instrument listed in the configurations file is invalid.
+     * @throws IOException If couldn't extract configs from resources.
+     * @throws MidiPathNotFoundException If default path listed in the configurations file is invalid.
+     * @throws NullPointerException If configurations file doesn't have required format.
+     * @throws ParserConfigurationException If there was a configuration error within the parser.
+     * @throws SAXException If couldn't parse configurations file.
      */
-    public MidiWars() throws IOException, SAXException, ParserConfigurationException, NullPointerException, InvalidInstrumentException, MidiPathNotFoundException {
+    public MidiWars() throws InvalidInstrumentException, IOException, MidiPathNotFoundException, NullPointerException, ParserConfigurationException, SAXException {
 
         loadConfigs();
 
@@ -63,14 +70,15 @@ public class MidiWars {
      * @param instrument Instrument to play with.
      * @param filename Name of midi file / playlist to play.
      *
-     * @throws InvalidMidiDataException Midi file is invalid.
-     * @throws IOException Can't open file.
      * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
+     * @throws MidifilesNotFoundException If couldn't find the midi files listed in the playlist.
      * @throws ParserConfigurationException If there was a configuration error within the parser.
      * @throws SAXException If couldn't parse playlist file.
-     * @throws NullPointerException If playlist file doesn't have required format.
      */
-    public void play(Instrument instrument, String filename) throws InvalidMidiDataException, IOException, AWTException, InterruptedException, ParserConfigurationException, SAXException, MidifilesNotFoundException {
+    public void play(Instrument instrument, String filename) throws AWTException, InterruptedException, InvalidMidiDataException, IOException, MidifilesNotFoundException, ParserConfigurationException, SAXException {
 
         if (filename.endsWith(".xml")) {
 
@@ -128,6 +136,8 @@ public class MidiWars {
 
     /**
      * Pauses playback.
+     *
+     * @throws InterruptedException If a thread was interrupted.
      */
     public void pause() throws InterruptedException {
         player.pause();
@@ -136,14 +146,21 @@ public class MidiWars {
 
     /**
      * Resumes playback.
+     *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      */
-    public void resume() throws AWTException, InvalidMidiDataException, InterruptedException, IOException {
+    public void resume() throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
         player.resume();
     }
 
 
     /**
      * Stops playback.
+     *
+     * @throws InterruptedException If a thread was interrupted.
      */
     public void stop() throws InterruptedException {
         player.stop();
@@ -152,16 +169,26 @@ public class MidiWars {
 
     /**
      * Plays previous song.
+     *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      */
-    public void prev() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+    public void prev() throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
         player.prev();
     }
 
 
     /**
      * Plays the next song.
+     *
+     * @throws AWTException If the platform configuration does not allow low-level input control.
+     * @throws InterruptedException If a thread was interrupted.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      */
-    public void next() throws InterruptedException, AWTException, InvalidMidiDataException, IOException {
+    public void next() throws AWTException, InterruptedException, InvalidMidiDataException, IOException {
         player.next();
     }
 
@@ -174,10 +201,10 @@ public class MidiWars {
      *
      * @return List of warnings.
      *
-     * @throws InvalidMidiDataException Midi file is invalid.
-     * @throws IOException Can't open file.
+     * @throws InvalidMidiDataException If midi file is invalid.
+     * @throws IOException If can't open file.
      *
-     * @see import com.midiwars.logic.instruments.Instrument.Warning
+     * @see com.midiwars.logic.instruments.Instrument.Warning
      */
     public ArrayList<Warning> canPlay(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
 
@@ -196,12 +223,14 @@ public class MidiWars {
      * Parses configuration file
      * and loads necessary info.
      *
-     * @throws ParserConfigurationException If there was a configuration error within the parser.
+     * @throws InvalidInstrumentException If default instrument listed in the configurations file is invalid.
      * @throws IOException If couldn't extract configs from resources.
-     * @throws SAXException If couldn't parse configurations file.
+     * @throws MidiPathNotFoundException If default path listed in the configurations file is invalid.
      * @throws NullPointerException If configurations file doesn't have required format.
+     * @throws ParserConfigurationException If there was a configuration error within the parser.
+     * @throws SAXException If couldn't parse configurations file.
      */
-    private void loadConfigs() throws ParserConfigurationException, IOException, SAXException, NullPointerException, InvalidInstrumentException, MidiPathNotFoundException {
+    private void loadConfigs() throws InvalidInstrumentException, IOException, MidiPathNotFoundException, NullPointerException, ParserConfigurationException, SAXException {
 
         // extract configs in case it doesn't already exist
         File configs = new File(CONFIGPATH);
@@ -241,7 +270,7 @@ public class MidiWars {
     /**
      * Getter.
      *
-     * @return Midipath.
+     * @return {@link #midiPath Midi path}.
      */
     public String getMidiPath() {
         return midiPath;

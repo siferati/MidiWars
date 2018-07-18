@@ -3,12 +3,9 @@ package com.midiwars.logic.midi;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
- * Represents a midi event about a keypress (NOTE_ON) or keyrelease (NOTE_OFF).
+ * A midi event about a keypress (NOTE_ON) or keyrelease (NOTE_OFF).
  */
 public class NoteEvent implements Comparable<NoteEvent> {
-
-    /* --- DEFINES --- */
-
     /* --- ATTRIBUTES --- */
 
     /** NOTE_ON (0x90) or NOTE_OFF (0x80). */
@@ -27,7 +24,7 @@ public class NoteEvent implements Comparable<NoteEvent> {
     /* --- METHODS --- */
 
     /**
-     * Constructor.
+     * Creates a new NoteEvent object.
      *
      * @param type NOTE_ON (0x90) or NOTE_OFF (0x80).
      * @param key Key number [0-127].

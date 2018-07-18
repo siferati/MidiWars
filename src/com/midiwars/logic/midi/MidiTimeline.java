@@ -12,13 +12,10 @@ import static javax.sound.midi.ShortMessage.NOTE_OFF;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
- * Represents the timeline of a given midi file.
+ * Timeline of a given midi file.
  * Holds information about all the notes played, their start time and duration.
  */
 public class MidiTimeline {
-
-    /* --- DEFINES --- */
-
 
     /* --- ATTRIBUTES --- */
 
@@ -28,16 +25,18 @@ public class MidiTimeline {
     /** Notes played. */
     private ArrayList<NoteEvent> timeline;
 
-    /** Maps tempo (QPM) changes (SET_TEMPO midi message) to the instant (tick) it happens.
+    /**
+     * Maps tempo (QPM) changes (SET_TEMPO midi message) to the instant (tick) it happens.
      * Note that tempo is mapped as QPM (quarter-note per minute) and not the usual BPM (beat per minute).
-     * This makes it so that all time signatures are handled the same way. */
+     * This makes it so that all time signatures are handled the same way.
+     */
     private TreeMap<Long, Double> tempo;
 
 
     /* --- METHODS --- */
 
     /**
-     * Constructor.
+     * Creates a new MidiTimeline object.
      *
      * @param filepath Path to midi file.
      *
@@ -60,13 +59,9 @@ public class MidiTimeline {
      */
     private void sort() {
 
-        Collections.sort(timeline, new Comparator<>() {
-            @Override
-            public int compare(NoteEvent n1, NoteEvent n2) {
-
-                if (n1.getTimestamp() == n2.getTimestamp()) return n1.compareTo(n2);
-                else return Double.compare(n1.getTimestamp(), n2.getTimestamp());
-            }
+        timeline.sort((n1, n2) -> {
+            if (n1.getTimestamp() == n2.getTimestamp()) return n1.compareTo(n2);
+            else return Double.compare(n1.getTimestamp(), n2.getTimestamp());
         });
     }
 
@@ -121,7 +116,8 @@ public class MidiTimeline {
     /**
      * Adds an entry to the tempo map.
      *
-     * @param tempo {@link #tempo Tempo}.
+     * @param tick Instant in time (ticks) this tempo change happened.
+     * @param tempo New tempo.
      */
     public void addTempo(long tick, double tempo) {
         this.tempo.put(tick, tempo);
@@ -165,6 +161,9 @@ public class MidiTimeline {
 
     /**
      * Returns an ordered list of tick-tempos between the given time frame.
+     *
+     * @param ticki Lower limit of time frame to look at.
+     * @param tickf Upper limit of time frame to look at.
      *
      * @return  List of tempos.
      */

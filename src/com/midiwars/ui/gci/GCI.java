@@ -78,9 +78,11 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         } catch (InvalidInstrumentException e) {
             displayError(true, "Default instrument listed in the configurations file is invalid.");
         } catch (IOException e) {
-            displayError(true, "Configurations file is missing.");
+            displayError(true, "couldn't extract configurations file from resources.");
         } catch (MidiPathNotFoundException e) {
             displayError(true, "Default path listed in the configurations file is invalid.");
+        } catch (NullPointerException e) {
+            displayError(true, "Configurations file doesn't have required format.");
         } catch (ParserConfigurationException e) {
             displayError(true, "There was a configuration error within the parser.");
         } catch (SAXException e) {
