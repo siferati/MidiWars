@@ -1,6 +1,7 @@
 package com.midiwars.logic.instruments;
 
 /**
+ * The in-game Musical Harp.
  * Tuned in C Major [C3, C6]
  */
 public class Harp extends Instrument {
@@ -10,7 +11,7 @@ public class Harp extends Instrument {
     /** {@link Instrument#name Name}. */
     public final static String NAME = "harp";
 
-    /** {@link Instrument#canHold Can Hold}. */
+    /** {@link Instrument#canHold Can't hold notes}. */
     public final static boolean CAN_HOLD = false;
 
     /** {@link Instrument#keybars Key bars}. */
@@ -20,14 +21,14 @@ public class Harp extends Instrument {
             {72, 74, 76, 77, 79, 81, 83, 84}
     };
 
-    /** {@link Instrument#idleKeybarIndex Idle Key bar Index}. */
+    /** {@link Instrument#idleKeybarIndex Idle key bar index}. */
     public final static int IDLE_KEYBAR_INDEX = 1;
 
 
     /* --- METHODS --- */
 
     /**
-     * Constructor.
+     * Creates a new Harp object.
      */
     public Harp() {
         super(NAME, CAN_HOLD, KEYBARS, IDLE_KEYBAR_INDEX);

@@ -15,7 +15,7 @@ import static com.midiwars.logic.instruments.Instrument.Warning.*;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
- * Represents a musical instrument.
+ * A musical instrument.
  */
 public abstract class Instrument {
 
@@ -84,7 +84,7 @@ public abstract class Instrument {
     /* --- METHODS --- */
 
     /**
-     * Constructor.
+     * Creates a new Instrument object.
      *
      * @param name Name of the instrument.
      * @param canHold If the instrument can hold notes.
@@ -120,8 +120,9 @@ public abstract class Instrument {
     /**
      * Plays the given midi timeline.
      *
-     * @param midiTimeline Midi Timeline.
+     * @param midiTimeline Midi timeline to play.
      * @param startNote Note (index) to start playback from.
+     * @throws AWTException If the platform configuration does not allow low-level input control.
      *
      * @return -1 If playback finished, next note (index) to play otherwise (ie playback was paused or stopped).
      */
@@ -244,7 +245,7 @@ public abstract class Instrument {
      * Looks into the future (starting from given position) to preemptively change keybars if needed.
      *
      * @param i Index of starting position in the timeline.
-     * @param timeline Midi Timeline.
+     * @param timeline Midi timeline to assess.
      */
     public void preemptivelyChangeKeybars(int i, ArrayList<NoteEvent> timeline) {
 

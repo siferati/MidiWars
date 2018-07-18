@@ -1,7 +1,7 @@
 package com.midiwars.logic.instruments;
 
 /**
- * Represents an instrument factory.
+ * An instrument factory.
  */
 public class InstrumentFactory {
 

@@ -9,6 +9,7 @@ import com.sun.jna.win32.W32APIOptions;
  */
 public interface MyUser32 extends User32 {
 
+    /** The instance. */
     MyUser32 INSTANCE = Native.loadLibrary("user32", MyUser32.class, W32APIOptions.DEFAULT_OPTIONS);
 
     /**
