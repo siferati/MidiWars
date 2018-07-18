@@ -64,6 +64,7 @@ public class MyRobot extends Robot {
         int cursor = built.second;
 
         // block input and release modifiers
+        chat.block();
         user32.BlockInput(true);
         releaseModifiers();
 
@@ -112,6 +113,7 @@ public class MyRobot extends Robot {
         }
         
         user32.BlockInput(false);
+        chat.unblock();
     }
 
 

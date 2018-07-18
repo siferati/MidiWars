@@ -55,11 +55,9 @@ public class Main {
 
         // figure out what UI to use
         if (args.length == 0 && System.getProperty("os.name").startsWith("Windows")) {
-            System.out.println("debug: Launching In-Game Chat Interface!");
             new GCI();
         }
         else {
-            System.out.println("debug: Launching Command Line Interface!");
             new CLI().parse(args);
         }
     }

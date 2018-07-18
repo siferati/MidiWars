@@ -2,12 +2,13 @@ package com.midiwars.ui.gci;
 
 import com.midiwars.jna.MyUser32;
 import com.midiwars.logic.Player;
+import com.midiwars.util.WinRobot;
 import com.sun.jna.platform.win32.WinUser;
 import com.midiwars.ui.UserInterface;
 import com.midiwars.util.Pair;
-import com.midiwars.util.SyncBoolean;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.midiwars.jna.MyWinUser.*;
 
@@ -39,24 +40,27 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
         /** Keyboard state. */
         public byte[] lpKeyState;
 
+        /** The original info about this event. */
+        private KBDLLHOOKSTRUCT kbdStruct;
+
 
         /**
          * Creates a new KbdEvent object.
          *
          * @param msg    Message type.
-         * @param vkCode Virtual-key code.
-         * @param scanCode Hardware scan code.
-         * @param flags The extended-key flag, event-injected flags, context code, and transition-state flag.
+         * @param kbdStruct Information about this input event.
          */
-        public KbdEvent(int msg, int vkCode, int scanCode, int flags) {
+        public KbdEvent(int msg, KBDLLHOOKSTRUCT kbdStruct) {
             this.msg = msg;
-            this.vkCode = vkCode;
-            this.scanCode = scanCode;
-            this.lpKeyState = new byte[256];
-            injected = (flags & LLKHF_INJECTED) == LLKHF_INJECTED;
+            this.kbdStruct = kbdStruct;
+            vkCode = kbdStruct.vkCode;
+            scanCode = kbdStruct.scanCode;
+            lpKeyState = new byte[256];
+            injected = (kbdStruct.flags & LLKHF_INJECTED) == LLKHF_INJECTED;
         }
 
 
+        // TODO Esc doesn't close the chat if playing (it cancels animation instead)
         @Override
         public void run() {
 
@@ -66,18 +70,31 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                 return;
             }
 
+            // if the input is blocked, key up events don't get through,
+            // so the keys stay pressed forever. This prevents that.
+            if (blocked.get() && (msg == WM_KEYUP || msg == WM_SYSKEYUP)) {
+                synchronized (blockedKeyupEvents) {
+                    blockedKeyupEvents.add(kbdStruct);
+                }
+            }
+
             switch (vkCode) {
 
                 // (de)activate chat
                 case VK_RETURN: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
 
-                        if (openChatHeldDown) {
+                        if (openChatHeldDown.get()) {
                             // chat closes if key is held down
                             open.set(false);
                         } else {
-                            open.swap();
-                            openChatHeldDown = true;
+                            // swap open value
+                            boolean value;
+                            do {
+                                value = open.get();
+                            } while (!open.compareAndSet(value, !value));
+
+                            openChatHeldDown.set(true);
                         }
 
                         // if chat is no longer opened
@@ -89,7 +106,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                         }
                     }
                     else if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
-                        openChatHeldDown = false;
+                        openChatHeldDown.set(false);
                     }
                     break;
                 }
@@ -98,7 +115,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                 case VK_ESCAPE: {
                     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
                         open.set(false);
-                        openChatHeldDown = false;
+                        openChatHeldDown.set(false);
                         synchronized (kbdEvents) {
                             kbdEvents.clear();
                         }
@@ -145,7 +162,7 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
                         synchronized (kbdEvents) {
 
                             // wait until it's safe
-                            while (holdGetKeyboardState) {
+                            while (holdGetKeyboardState.get()) {
                                 Thread.onSpinWait();
                             }
 
@@ -173,22 +190,31 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
     /* --- ATTRIBUTES --- */
 
     /** True if GetKeyboardState can't be called at the moment. */
-    public volatile boolean holdGetKeyboardState;
+    private final AtomicBoolean holdGetKeyboardState;
+
+    /** True if the input is currently blocked, False otherwise. */
+    public final AtomicBoolean blocked;
+
+    /** List of keyup events that didn't go through (because input was blocked). */
+    private final ArrayList<KBDLLHOOKSTRUCT> blockedKeyupEvents;
 
     /** The user interface that owns this instance. */
-    private UserInterface ui;
+    private final UserInterface ui;
 
     /** True if chat is opened, False otherwise. */
-    private volatile SyncBoolean open;
+    private final AtomicBoolean open;
 
     /** True if the open chat keybind is held down, False otherwise. */
-    private volatile boolean openChatHeldDown;
+    private final AtomicBoolean openChatHeldDown;
 
     /** List of keyboard events detected while chat was active. */
     private final ArrayList<KbdEvent> kbdEvents;
 
     /** DLL. */
     private final MyUser32 user32;
+
+    /** Used to synthesize key releases. */
+    private final WinRobot robot;
 
     /** The instance. */
     private static final Chat instance = new Chat();
@@ -215,10 +241,13 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
         this.ui = UserInterface.getInstance();
 
         // inits
-        open = new SyncBoolean(false);
-        openChatHeldDown = false;
+        open = new AtomicBoolean(false);
+        openChatHeldDown = new AtomicBoolean(false);
         kbdEvents = new ArrayList<>();
-        holdGetKeyboardState = false;
+        holdGetKeyboardState = new AtomicBoolean(false);
+        blocked = new AtomicBoolean(false);
+        robot = new WinRobot();
+        blockedKeyupEvents = new ArrayList<>();
 
         // dll
         user32 = MyUser32.INSTANCE;
@@ -238,12 +267,9 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
 
         // get message and virtual-key code
         int msg = wParam.intValue();
-        int vkCode = kbdStruct.vkCode;
-        int scanCode = kbdStruct.scanCode;
-        int flags = kbdStruct.flags;
 
         // delegate message processing
-        Thread kbdEventHandler = new Thread(new KbdEvent(msg, vkCode, scanCode, flags));
+        Thread kbdEventHandler = new Thread(new KbdEvent(msg, kbdStruct));
         kbdEventHandler.start();
 
         return user32.CallNextHookEx(null, nCode, wParam, lParam);
@@ -429,6 +455,28 @@ public class Chat implements WinUser.LowLevelKeyboardProc {
      * @param holdGetKeyboardState New value for holdGetKeyboardState.
      */
     public void setHoldGetKeyboardState(boolean holdGetKeyboardState) {
-        this.holdGetKeyboardState = holdGetKeyboardState;
+        this.holdGetKeyboardState.set(holdGetKeyboardState);
+    }
+
+
+    /**
+     * Signals that the input is blocked.
+     */
+    public void block() {
+        blocked.set(true);
+    }
+
+
+    /**
+     * Signals that the input is unblocked
+     * and releases all stored blocked keyup events.
+     */
+    public void unblock() {
+        blocked.set(false);
+        synchronized (blockedKeyupEvents) {
+            for (KBDLLHOOKSTRUCT kbdStruct : blockedKeyupEvents) {
+                robot.keyRelease(kbdStruct);
+            }
+        }
     }
 }

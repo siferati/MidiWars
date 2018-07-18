@@ -7,6 +7,9 @@ import com.sun.jna.platform.win32.WinUser;
  */
 public interface MyWinUser extends WinUser {
 
+    /** Flag for extend key. */
+    int LLKHF_EXTENDED = 0x0001;
+
     /** Flag for injected keyboard events. */
     int LLKHF_INJECTED = 0x00000010;
 
