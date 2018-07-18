@@ -17,6 +17,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 /**
@@ -27,7 +29,7 @@ public class MidiWars {
     /* --- DEFINES --- */
 
     /** Path to configurations file. */
-    public static final String CONFIGPATH = "./config.xml";
+    public static final String CONFIGPATH = "config.xml";
 
 
     /* --- ATTRIBUTES --- */
@@ -195,17 +197,25 @@ public class MidiWars {
      * and loads necessary info.
      *
      * @throws ParserConfigurationException If there was a configuration error within the parser.
-     * @throws IOException If configurations file is missing.
+     * @throws IOException If couldn't extract configs from resources.
      * @throws SAXException If couldn't parse configurations file.
      * @throws NullPointerException If configurations file doesn't have required format.
      */
     private void loadConfigs() throws ParserConfigurationException, IOException, SAXException, NullPointerException, InvalidInstrumentException, MidiPathNotFoundException {
 
+        // extract configs in case it doesn't already exist
+        File configs = new File(CONFIGPATH);
+        if (!configs.exists()) {
+            InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIGPATH);
+            Files.copy(is, Paths.get(CONFIGPATH));
+            is.close();
+        }
+
         // setup doc
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setIgnoringElementContentWhitespace(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(new File(CONFIGPATH));
+        Document doc = builder.parse(configs);
 
         // get first occurrence only
         midiPath = doc.getDocumentElement().getElementsByTagName("midipath").item(0).getTextContent();
@@ -213,7 +223,7 @@ public class MidiWars {
 
         // make sure path has a trailing slash
         if (!midiPath.endsWith("/") && !midiPath.endsWith("\\")) {
-            midiPath += "/";
+            midiPath += File.separator;
         }
 
         // check if path is valid
