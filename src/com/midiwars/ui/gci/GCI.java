@@ -179,6 +179,8 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
      * Adds the app to the system tray.
      *
      * @return The icon shown in the system tray.
+     *
+     * @throws AWTException If the desktop system tray is missing.
      */
     private TrayIcon addToSystemTray() throws AWTException {
 
