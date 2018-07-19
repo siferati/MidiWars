@@ -311,6 +311,7 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
     public void pause() {
         try {
             app.pause();
+            Chat.getInstance().unblock();
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
         }
@@ -337,6 +338,7 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
     public void stop() {
         try {
             app.stop();
+            Chat.getInstance().unblock();
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
         }
@@ -417,6 +419,8 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
         }
+
+       Chat.getInstance().unblock();
 
         if (trayIcon != null) trayIcon.displayMessage("Application exit", "Goodbye.", NONE);
 

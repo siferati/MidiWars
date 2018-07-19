@@ -3,13 +3,13 @@ package com.midiwars.logic;
 import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.ui.UserInterface;
-import com.midiwars.util.SyncInt;
 
 import javax.sound.midi.InvalidMidiDataException;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.midiwars.logic.Player.State.PAUSED;
 import static com.midiwars.logic.Player.State.PLAYING;
@@ -67,7 +67,7 @@ public class Player {
     private Instrument instrument;
 
     /** The file that's currently playing. */
-    private volatile SyncInt currentSong;
+    private final AtomicInteger currentSong;
 
     /** Note (index) to resume playback from. */
     private int resumeNote;
@@ -104,7 +104,7 @@ public class Player {
         repeat = false;
         playlist = new String[0];
         prevSong = "";
-        currentSong = new SyncInt(0);
+        currentSong = new AtomicInteger(0);
         resumeNote = 0;
         currentPlayingThread = null;
         prevClipboardContents = null;
@@ -148,7 +148,7 @@ public class Player {
             // shuffle playlist
             if (shuffle && resumeNote == 0) shuffle(firstIte);
 
-            for (; currentSong.get() < playlist.length; currentSong.increment()) {
+            for (; currentSong.get() < playlist.length; currentSong.incrementAndGet()) {
 
                 // make sure it's a valid index
                 if (resumeNote < 0){
@@ -222,7 +222,7 @@ public class Player {
         this.repeat = repeat;
         this.playlist = playlist;
         prevSong = "";
-        currentSong = new SyncInt(0);
+        currentSong.set(0);
         resumeNote = 0;
 
         // start playback
@@ -330,7 +330,7 @@ public class Player {
                 currentSong.set(0);
             }
             else {
-                currentSong.increment();
+                currentSong.incrementAndGet();
             }
         }
         // prev song
@@ -339,7 +339,7 @@ public class Player {
                 currentSong.set(playlist.length - 1);
             }
             else {
-                currentSong.decrement();
+                currentSong.decrementAndGet();
             }
         }
 

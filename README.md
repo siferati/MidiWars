@@ -37,6 +37,6 @@
 * ~~Check OS on start~~
 * ~~Check for updates on start~~
 * ~~Pack configs.xml into the .jar~~
-* JavaDocs & code review & code cleanup (debug messages etc)
+* ~~JavaDocs & code review & code cleanup (debug messages etc)~~
 * Test run (cli + gci)
 * Setup repository for release
