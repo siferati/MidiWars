@@ -1,0 +1,9 @@
+com.midiwars
+com.midiwars.jna
+com.midiwars.logic
+com.midiwars.logic.instruments
+com.midiwars.logic.midi
+com.midiwars.ui
+com.midiwars.ui.cli
+com.midiwars.ui.gci
+com.midiwars.util
