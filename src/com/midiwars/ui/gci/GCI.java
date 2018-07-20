@@ -1,7 +1,7 @@
 package com.midiwars.ui.gci;
 
-import static com.midiwars.jna.MyWinUser.WINEVENT_OUTOFCONTEXT;
 import static com.midiwars.jna.MyWinUser.EVENT_SYSTEM_FOREGROUND;
+import static com.midiwars.jna.MyWinUser.WINEVENT_OUTOFCONTEXT;
 import static com.sun.jna.platform.win32.WinUser.WH_KEYBOARD_LL;
 import static java.awt.TrayIcon.MessageType.*;
 
@@ -17,9 +17,9 @@ import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinDef.LONG;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
-import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.HHOOK;
+import com.sun.jna.platform.win32.WinUser.WinEventProc;
 import org.xml.sax.SAXException;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 /**
  * Game Chat Interface.
  */
-public class GCI extends UserInterface implements WinUser.WinEventProc {
+public class GCI extends UserInterface implements WinEventProc {
 
     /* --- ATTRIBUTES --- */
 
@@ -66,8 +66,17 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
             // dll
             user32 = MyUser32.INSTANCE;
 
+            // find if the game is running
+            HWND hwnd = user32.FindWindow(null, GAME_WINDOW);
+
+            // bring game window to the front
+            if (hwnd != null) {
+                user32.SetForegroundWindow(hwnd);
+                Thread.sleep(100);
+            }
+
             // check if the game is the current foreground window
-            HWND hwnd = user32.GetForegroundWindow();
+            hwnd = user32.GetForegroundWindow();
             active.set(getWindowTitle(hwnd).equals(GAME_WINDOW));
 
             // system tray icon
@@ -75,6 +84,8 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
 
         } catch (AWTException e) {
             displayError(true, "Couldn't add application to the system tray.\nDesktop system tray is missing.");
+        } catch (InterruptedException e) {
+            displayError(true, "A thread was interrupted.");
         } catch (InvalidInstrumentException e) {
             displayError(true, "Default instrument listed in the configurations file is invalid.");
         } catch (IOException e) {
@@ -234,9 +245,9 @@ public class GCI extends UserInterface implements WinUser.WinEventProc {
 
 
     @Override
-    public void callback(HANDLE hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread,DWORD dwmsEventTime) {
+    public void callback(HANDLE hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) {
 
-        if (!event.equals(new DWORD(EVENT_SYSTEM_FOREGROUND)) || hwnd == null) {
+        if (hwnd == null) {
             return;
         }
 

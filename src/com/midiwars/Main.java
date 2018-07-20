@@ -2,6 +2,7 @@ package com.midiwars;
 
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 
+import com.midiwars.jna.MyUser32;
 import com.midiwars.ui.cli.CLI;
 import com.midiwars.ui.gci.GCI;
 import org.json.JSONObject;
@@ -29,7 +30,20 @@ public class Main {
      */
     public static void main(String[] args) {
 
-        if(!isLatestVersion()) {
+        // figure out what UI to use
+        boolean gci = (args.length == 0 && System.getProperty("os.name").startsWith("Windows"));
+
+        // isLatestVersion() takes a while to execute,
+        // so there's a need to block input - preventing the user from swapping windows
+        // during that time. SetForegroundWindow() wouldn't work otherwise.
+        if (gci) MyUser32.INSTANCE.BlockInput(true);
+
+        boolean isLatestVersion = isLatestVersion();
+
+        // unblock input
+        if (gci) MyUser32.INSTANCE.BlockInput(false);
+
+        if(!isLatestVersion) {
 
             // make the dialog box prettier
             try {
@@ -52,14 +66,9 @@ public class Main {
             JOptionPane.showMessageDialog(null, html, "Midi Wars Update", PLAIN_MESSAGE);
         }
 
-
-        // figure out what UI to use
-        if (args.length == 0 && System.getProperty("os.name").startsWith("Windows")) {
-            new GCI();
-        }
-        else {
-            new CLI().parse(args);
-        }
+        // launch UI
+        if (gci) new GCI();
+        else new CLI().parse(args);
     }
 
 
