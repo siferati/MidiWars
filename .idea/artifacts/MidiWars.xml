@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MidiWars">
+    <output-path>$PROJECT_DIR$/out/artifacts/MidiWars</output-path>
+    <root id="archive" name="MidiWars.jar">
+      <element id="module-output" name="Launcher" />
+      <element id="artifact" artifact-name="core" />
+    </root>
+  </artifact>
+</component>

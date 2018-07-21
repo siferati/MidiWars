@@ -8,9 +8,7 @@ import com.midiwars.ui.gci.GCI;
 import org.json.JSONObject;
 
 import javax.swing.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -31,12 +29,26 @@ public class Main {
     public static void main(String[] args) {
 
         // figure out what UI to use
-        boolean gci = (args.length == 0 && System.getProperty("os.name").startsWith("Windows"));
+        boolean gci = (args.length == 1 && args[0].equals("-windows") && System.getProperty("os.name").startsWith("Windows"));
 
-        // isLatestVersion() takes a while to execute,
-        // so there's a need to block input - preventing the user from swapping windows
-        // during that time. SetForegroundWindow() wouldn't work otherwise.
-        if (gci) MyUser32.INSTANCE.BlockInput(true);
+        if (gci) {
+
+            // isLatestVersion() takes a while to execute,
+            // so there's a need to block input - preventing the user from swapping windows
+            // during that time. SetForegroundWindow() wouldn't work otherwise.
+            MyUser32.INSTANCE.BlockInput(true);
+
+            // redirect output to log file, since user won't be able to see the console
+            // due to this being called through elevate.cmd
+            try {
+                PrintStream out = new PrintStream(new FileOutputStream("log.txt"));
+                System.setOut(out);
+            }
+            catch (FileNotFoundException e) {
+                System.out.println("Critical Error: Couldn't create the log file.");
+                return;
+            }
+        }
 
         boolean isLatestVersion = isLatestVersion();
 

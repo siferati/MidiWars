@@ -1,7 +1,7 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="MidiWars:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/MidiWars_jar</output-path>
-    <root id="archive" name="MidiWars.jar">
+  <artifact type="jar" name="core">
+    <output-path>$PROJECT_DIR$/out/artifacts/core</output-path>
+    <root id="archive" name="core.jar">
       <element id="module-output" name="MidiWars" />
       <element id="extracted-dir" path="$PROJECT_DIR$/libs/jna-4.5.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/libs/jna-platform-4.5.1.jar" path-in-jar="/" />
