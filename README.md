@@ -188,7 +188,7 @@ If you're an artist looking to contribute, send me an e-mail with some work samp
 
 Donations of any kind are **not needed** to keep Midi Wars running.
 
-If you'd still like to show your support, feel free to gift me *Guild Wars 2* related stuff. I'd be especially grateful for receiving musical instruments or activation keys for the full game / expansions, since I only own a free account.
+If you'd still like to show your support, feel free to gift me *Guild Wars 2* related stuff. I'd be especially grateful for receiving musical instruments or activation keys for the full game and its expansions, since I only own a free account.
 
 *A simple e-mail with a thank you note would also be greatly appreciated!*
 
