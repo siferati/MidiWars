@@ -4,6 +4,24 @@ Midi Wars is a cross-platform desktop application that translates midi data to k
 
 It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't even have a UI for the most part! One of the key aspects of Midi Wars is its CLI like interface. Simply open the in-game chat, type the respective command, and let the app do its thing.
 
+## Table of Contents
+
+* [Introduction](#midi-wars)
+* [Features](#features)
+* [Requirements](#requirements)
+* [Restrictions](#restrictions)
+* [Notes](#notes)
+* [Recommendations](#recommendations)
+* [Setup](#setup)
+* [Usage](#usage)
+* [Playlists](#playlists)
+* [User Interface](#user-interface)
+* [Bugs & Suggestions](#bugs-&-suggestions)
+* [Contributing](#contributing)
+* [Donations](#donations)
+* [Download](#download)
+* [Disclaimer](#disclaimer)
+
 ## Features
 
 * Play any song inside your favorite game using its instruments.
@@ -24,6 +42,11 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 
 * Songs should be in the key of *C Major*.
 * Songs should not contain any accidentals (ie should only contain notes from the *C Major* scale).
+* Midi Wars only supports up to 3 octaves. Songs targeting instruments that can play one, two or three octaves should only contain the following notes, respectively:
+
+| ![](res/one.png) | ![](res/two.png) | ![](res/three.png) |
+|:----------:|:-----------:|:-------------:|
+| one octave | two octaves | three octaves |
 
 ## Notes
 
@@ -146,3 +169,40 @@ The warning system is used to warn you when the midi file you are trying to play
 The system tray icon serves as an assurance that your actions aren't being monitored outside the game, since the CLI like interface works basically like a key logger.
 
 Therefore, the icon changes based on whether it is currently listening for key presses or not. The icon should **only ever be green while the game window is in the foreground**, meaning the keyboard hook is installed. **At any other time, the icon should be red**, meaning the keyboard hook is not installed.
+
+## Bugs & Suggestions
+
+Found a bug or have a suggestion?
+
+Create a new issue and I'll be sure to review it.
+
+## Contributing
+
+If you'd like to contribute to the project, feel free to submit a pull request with your changes. I'll make sure to review it.
+
+You're also welcome to send me an e-mail with any questions you might have.
+
+## Donations
+
+Donations of any kind are **not needed** to keep Midi Wars running.
+
+If you'd still like to show your support, feel free to gift me stuff related to *Guild Wars 2*. I'd be especially grateful for receiving musical instruments or activation keys for the full game / expansions, since I only own a free account.
+
+A simple in-game mail with a *thank you* note would also be nice. (:
+
+**Region:** Europe  
+**IGN:** Nanasshie
+
+## Download
+
+Head to the releases page and download the most recent version from there.
+
+## Disclaimer
+
+*Midi Wars is not related to any individual, company, software product or any other entity besides itself and its developer.*
+
+*Midi Wars and its developer are not responsible for any damage of any kind that may result  from the use of Midi Wars. This includes, but is not limited to, hardware malfunctions, account suspensions or account bans.*
+
+*Furthermore, Midi Wars and its developer hold no responsibility over the actions of those using Midi Wars.*
+
+*Use at your own risk.*
