@@ -41,7 +41,7 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 ## Restrictions
 
 * Songs should be in the key of *C Major*.
-* Songs should not contain any accidentals (ie should only contain notes from the *C Major* scale).
+* Songs should not contain any *accidentals* (*i.e.* should only contain notes from the *C Major* scale).
 * Midi Wars only supports up to 3 octaves. Songs targeting instruments that can play one, two or three octaves should only contain the following notes, respectively:
 
 | ![](res/one.png) | ![](res/two.png) | ![](res/three.png) |
@@ -53,27 +53,27 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 * If, for whatever reason, the app crashes, open `log.txt` to see what went wrong.
 * Though Midi Wars allows for typing while playing, this functionality is **not stable** - don't expect to type as fluidly as the regular chat.
 * If, for whatever reason, the chat isn't properly closed and you start seeing random numbers appearing on it, simply close it manually.
-* You'll probably have difficulty typing modifier keys in chat while playing, especially when playing songs with faster tempos, such as pressing Shift + 1 for the exclamation mark. That's because modifier keys need to be released when playing a note. Just keep trying and press the keys as fast as you can - you'll eventually be able to type what you want.
+* You'll probably have difficulty typing *modifier keys* in chat while playing, especially when playing songs with faster tempos, such as pressing `Shift + 1` for the *exclamation mark*. That's because modifier keys need to be released when playing a note. Just keep trying and press the keys as fast as you can - you'll eventually be able to type what you want.
 
 ## Recommendations
 
-* Launch Midi Wars **after** you're already inside the game. The app might have trouble detecting the game otherwise.
+* Launch Midi Wars **after** you're already inside the game. The app might have trouble detecting the game window otherwise.
 
 * Run the game in *Windowed Fullscreen*.
 
-- Don't use any *modifier keys* (Shift, Ctrl, Alt, etc) for game actions (dodging, jumping, flying, etc). Otherwise, you might find yourself doing those actions if you press those keys while typing in chat and playing a song at the same time.
+- Don't use *any* modifier keys (Shift, Ctrl, Alt, etc) for game actions (dodging, jumping, flying, etc). Otherwise, you might find yourself doing those actions if you press those keys while typing in chat and playing a song at the same time.
 
 ## Setup
 
 Midi Wars translates midi data into sets of octaves, called *keybars*, and only one can be active at any given time.
 
-Let's say you're currently playing the note *B4*. That means the current active keybar supports the notes from *C4* to *C5*. If you wanted to play the note *D5*, the app would first have to change the active keybar, resulting in the new active keybar supporting the notes from *C5* to *C6*.
+Let's say you're currently playing the note *B4*. That means the current active keybar supports the notes from *C4* to *C5*. If you wanted to play the note *B5*, the app would first have to change the active keybar, resulting in the new active keybar supporting the notes from *C5* to *C6*.
 
 ### Key Bindings
 
 In order for Midi Wars to work properly, you need to change your in-game key bindings to the following:
 
-| Degree | Ⅰ | Ⅱ | Ⅲ | Ⅳ | Ⅴ | Ⅵ | Ⅶ | Ⅰ | Keybar Down | Keybar Up |
+| Scale Degree | Ⅰ | Ⅱ | Ⅲ | Ⅳ | Ⅴ | Ⅵ | Ⅶ | Ⅰ | Keybar Down | Keybar Up |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-----------:|:---------:|
 | **Key Binding** | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 0 | 9 |
 
@@ -99,7 +99,7 @@ By default, midi files should be located in the same folder as the app itself, b
 ```
 
 * `<windowtitle/>` The title of the target window (usually the game window). Midi Wars will only be active while the title of the *foreground window* matches this value.
-* `<midipath/>` The path where midi files are stored. Can be an absolute path or a path relative to the location of *config.xml*. By default, midi files should be located in the same folder as *config.xml*.
+* `<midipath/>` The path where midi files are stored. Can be an absolute path or a path relative to the location of the app. By default, midi files should be located in the same folder as the app itself.
 * `<octavecd/>` The cooldown between octave changes (ms). Sometimes, in-game instruments will have cooldowns associated with octave changes. Change this value to match whatever instrument you're using. By default, this value is 200ms.
 
 ## Usage
@@ -130,7 +130,7 @@ Examples:
 
 ### Commands
 
-* `play <filename>` Plays the given midi file (or playlist).
+* `play <filename>` Plays the given midi file or playlist.
 * `canplay <filename>` Checks if the given midi file can be properly played.
 * `pause` Pauses playback. Resumes from the same position later.
 * `stop` Stops playback. Resumes from the start of the song later.
@@ -143,7 +143,7 @@ Examples:
 
 ## Playlists
 
-Playlists can be created through the use of `.xml files.  Besides the obvious listing of songs to play, playlists can also have two extra options: repeat and shuffle modes.
+Playlists can be created through the use of `.xml` files.  Besides the obvious listing of songs to play, playlists can also have two extra options: repeat and shuffle modes.
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
@@ -158,7 +158,7 @@ Playlists can be created through the use of `.xml files.  Besides the obvious li
 
 ## User Interface
 
-Besides the CLI like interface explained above, Midi Wars has two more interface elements: warning system and system tray icon.
+Besides the CLI like interface explained above, Midi Wars has two more interface elements: the warning system and the system tray icon.
 
 ### Warning System
 
@@ -166,29 +166,31 @@ The warning system is used to warn you when the midi file you are trying to play
 
 ### System Tray (windows-only)
 
-The system tray icon serves as an assurance that your actions aren't being monitored outside the game, since the CLI like interface works basically like a key logger.
+The system tray icon serves as an assurance that your actions aren't being monitored outside the game, since Midi Wars works basically like a key logger.
 
-Therefore, the icon changes based on whether it is currently listening for key presses or not. The icon should **only ever be green while the game window is in the foreground**, meaning the keyboard hook is installed. **At any other time, the icon should be red**, meaning the keyboard hook is not installed.
+Therefore, the icon changes based on whether it is currently listening for key presses or not. The icon should **only ever be green while the game window is in the foreground**, meaning the keyboard hook is installed. **At any other time, the icon should be red**, meaning the keyboard hook is **not** installed.
 
 ## Bugs & Suggestions
 
 Found a bug or have a suggestion?
 
-Create a new issue and I'll be sure to review it.
+Create a new issue and I'll be sure to review it!
 
 ## Contributing
 
-If you'd like to contribute to the project, feel free to submit a pull request with your changes. I'll make sure to review it.
+If you'd like to contribute to the project, feel free to submit a pull request with your changes.
 
 You're also welcome to send me an e-mail with any questions you might have.
+
+If you're an artist looking to contribute, send me an e-mail with some work samples. I'd love to have some decent looking icons for the system tray. *(since the icons I made are basically just a colored circle! heh)*
 
 ## Donations
 
 Donations of any kind are **not needed** to keep Midi Wars running.
 
-If you'd still like to show your support, feel free to gift me stuff related to *Guild Wars 2*. I'd be especially grateful for receiving musical instruments or activation keys for the full game / expansions, since I only own a free account.
+If you'd still like to show your support, feel free to gift me *Guild Wars 2* related stuff. I'd be especially grateful for receiving musical instruments or activation keys for the full game / expansions, since I only own a free account.
 
-A simple in-game mail with a *thank you* note would also be nice. (:
+*A simple e-mail with a thank you note would also be greatly appreciated!*
 
 **Region:** Europe  
 **IGN:** Nanasshie
@@ -197,12 +199,14 @@ A simple in-game mail with a *thank you* note would also be nice. (:
 
 Head to the releases page and download the most recent version from there.
 
+Midi Wars automatically checks for updates on start, so you'll always be notified when a new version is available.
+
 ## Disclaimer
 
 *Midi Wars is not related to any individual, company, software product or any other entity besides itself and its developer.*
 
-*Midi Wars and its developer are not responsible for any damage of any kind that may result  from the use of Midi Wars. This includes, but is not limited to, hardware malfunctions, account suspensions or account bans.*
+*Midi Wars and its developer are not responsible for any damage, of any kind, that may result  from the use of Midi Wars. This includes, but is not limited to, hardware malfunctions, account suspensions and account bans.*
 
-*Furthermore, Midi Wars and its developer hold no responsibility over the actions of those using Midi Wars.*
+*Furthermore, Midi Wars and its developer hold no responsibility, of any kind, over the actions of those using Midi Wars.*
 
 *Use at your own risk.*
