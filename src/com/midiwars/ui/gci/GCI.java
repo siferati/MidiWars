@@ -10,9 +10,8 @@ import com.midiwars.logic.MidiWars;
 import com.midiwars.ui.UserInterface;
 import com.midiwars.util.MyExceptions.MidiPathNotFoundException;
 import com.midiwars.util.MyExceptions.MidifilesNotFoundException;
-import com.midiwars.logic.instruments.Instrument;
-import com.midiwars.logic.instruments.Instrument.Warning;
-import com.midiwars.util.MyExceptions.InvalidInstrumentException;
+import com.midiwars.util.MyExceptions.InvalidWindowTitle;
+import com.midiwars.logic.Instrument.Warning;
 import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinDef.LONG;
 import com.sun.jna.platform.win32.WinDef.HWND;
@@ -63,37 +62,39 @@ public class GCI extends UserInterface implements WinEventProc {
             // inits
             app = new MidiWars();
 
+            if (app.getWindowTitle().equals("TITLE OF TARGET WINDOW HERE")) {
+                throw new InvalidWindowTitle();
+            }
+
             // dll
             user32 = MyUser32.INSTANCE;
 
-            // find if the game is running
-            HWND hwnd = user32.FindWindow(null, GAME_WINDOW);
+            // find if the target window is running
+            HWND hwnd = user32.FindWindow(null, app.getWindowTitle());
 
-            // bring game window to the front
+            // bring target window to the front
             if (hwnd != null) {
                 user32.SetForegroundWindow(hwnd);
                 Thread.sleep(100);
             }
 
-            // check if the game is the current foreground window
+            // check if the target window is the current foreground window
             hwnd = user32.GetForegroundWindow();
-            active.set(getWindowTitle(hwnd).equals(GAME_WINDOW));
+            active.set(getWindowTitle(hwnd).equals(app.getWindowTitle()));
 
             // system tray icon
             trayIcon = addToSystemTray();
 
         } catch (AWTException e) {
-            displayError(true, "Couldn't add application to the system tray.\nDesktop system tray is missing.");
+            displayError(true, "Couldn't add application to the system tray. Desktop system tray is missing.");
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
-        } catch (InvalidInstrumentException e) {
-            displayError(true, "Default instrument listed in the configurations file is invalid.");
+        } catch (InvalidWindowTitle e) {
+            displayError(true, "Window title listed in configurations file is invalid.");
         } catch (IOException e) {
             displayError(true, "couldn't extract configurations file from resources.");
         } catch (MidiPathNotFoundException e) {
             displayError(true, "Default path listed in the configurations file is invalid.");
-        } catch (NullPointerException e) {
-            displayError(true, "Configurations file doesn't have required format.");
         } catch (ParserConfigurationException e) {
             displayError(true, "There was a configuration error within the parser.");
         } catch (SAXException e) {
@@ -254,12 +255,12 @@ public class GCI extends UserInterface implements WinEventProc {
         synchronized (active) {
 
             // no need to do stuff if value of active didn't change
-            boolean newActive = getWindowTitle(hwnd).equals(GAME_WINDOW);
+            boolean newActive = getWindowTitle(hwnd).equals(app.getWindowTitle());
             if (newActive == active.get()) {
                 return;
             }
 
-            // check if the game is the current foreground window
+            // check if target window is the current foreground window
             active.set(newActive);
 
             // pause playback and uninstall the hook
@@ -289,7 +290,7 @@ public class GCI extends UserInterface implements WinEventProc {
     public void displayUsage() {
 
         if (trayIcon != null) {
-            trayIcon.displayMessage("Invalid command", "Usage: /mw <command> [options]", NONE);
+            trayIcon.displayMessage("Invalid command", "Usage: /mw [command]", NONE);
         } else {
             System.out.println("Invalid command. Usage: /mw <command> [options]");
         }
@@ -297,9 +298,9 @@ public class GCI extends UserInterface implements WinEventProc {
 
 
     @Override
-    public void play(Instrument instrument, String filename) {
+    public void play(String filename) {
         try {
-            app.play(instrument, filename);
+            app.play(filename);
         } catch (AWTException e) {
             displayError(true, "Platform configuration does not allow low-level input control.");
         } catch (InterruptedException e) {
@@ -388,14 +389,14 @@ public class GCI extends UserInterface implements WinEventProc {
     }
 
     @Override
-    public void canPlay(Instrument instrument, String filename, boolean explicit) {
+    public void canPlay(String filename, boolean explicit) {
 
         if (!explicit) {
             filename = filename.replace(app.getMidiPath(), "");
         }
 
         try {
-            ArrayList<Warning> warnings = app.canPlay(instrument, filename);
+            ArrayList<Warning> warnings = app.canPlay(filename);
             if (warnings.size() == 0 && explicit) {
                 trayIcon.displayMessage("No problems found", "MIDI file is ready for playback.", NONE);
             } else {

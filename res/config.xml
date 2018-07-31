@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
+    <windowtitle>TITLE OF TARGET WINDOW HERE</windowtitle>
     <midipath>.</midipath>
-    <instrument>magbell</instrument>
+    <octavecd>200</octavecd>
 </config>

@@ -1,4 +1,4 @@
 /**
- * The main package. Holds everything related to the application.
+ * The application module.
  */
 package com.midiwars;

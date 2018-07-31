@@ -1,7 +1,5 @@
 package com.midiwars.ui;
 
-import com.midiwars.logic.instruments.Instrument;
-import com.midiwars.logic.instruments.InstrumentFactory;
 import com.midiwars.util.MyExceptions.UIAlreadyExists;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,9 +10,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class UserInterface {
 
     /* --- DEFINES --- */
-
-    /** Name of the window of the game. */
-    public final static String GAME_WINDOW = "Guild Wars 2";
 
     /** Name of this application. */
     public final static String APP_NAME = "Midi Wars";
@@ -52,13 +47,10 @@ public abstract class UserInterface {
     /** Command to check playability of a midi file. */
     public final static String CMD_CANPLAY = "canplay";
 
-    /**  Option to not use default instrument. */
-    public final static String OPT_INST = "-inst";
-
 
     /* --- ATTRS --- */
 
-    /** True if the game is the active window, False otherwise. */
+    /** True if the target window is the active window, False otherwise. */
     protected final AtomicBoolean active;
 
     /**
@@ -92,7 +84,7 @@ public abstract class UserInterface {
     /**
      * Getter.
      *
-     * @return True if the game is the active window, False otherwise.
+     * @return True if target window is the active window, False otherwise.
      */
     public boolean isActive() {
         return active.get();
@@ -108,10 +100,9 @@ public abstract class UserInterface {
     /**
      * Plays the given file.
      *
-     * @param instrument Instrument to play given file with.
      * @param filename File to play.
      */
-    public abstract void play(Instrument instrument, String filename);
+    public abstract void play(String filename);
 
 
     /**
@@ -147,11 +138,10 @@ public abstract class UserInterface {
     /**
      * Checks if the given midi file can be played by the given instrument.
      *
-     * @param instrument Instrument to play given file with.
      * @param filename Name of midi file to play.
      * @param explicit True if this was explicitly called by the user, False otherwise.
      */
-    public abstract void canPlay(Instrument instrument, String filename, boolean explicit);
+    public abstract void canPlay(String filename, boolean explicit);
 
 
     /**
@@ -180,7 +170,6 @@ public abstract class UserInterface {
         int nOps = 0;
 
         String filename = "";
-        Instrument instrument = null;
 
         boolean exit = false;
         for (int i = 0; !exit && i < args.length; i++) {
@@ -289,18 +278,6 @@ public abstract class UserInterface {
                     break;
                 }
 
-                case OPT_INST: {
-
-                    if (i != args.length - 1) {
-                        instrument = InstrumentFactory.newInstrument(args[i + 1]);
-                        // skip next arg (since it's the instrument)
-                        i++;
-                    } else {
-                        exit = true;
-                    }
-                    break;
-                }
-
                 default:
                     exit = true;
                     break;
@@ -312,9 +289,9 @@ public abstract class UserInterface {
         }
         else if (!exit && nOps == 1) {
 
-            if (play) play(instrument, filename);
+            if (play) play(filename);
 
-            if (canPlay) canPlay(instrument, filename,true);
+            if (canPlay) canPlay(filename,true);
 
             if (pause) pause();
 

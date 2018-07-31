@@ -1,6 +1,5 @@
 package com.midiwars.logic;
 
-import com.midiwars.logic.instruments.Instrument;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.ui.UserInterface;
 
@@ -154,7 +153,7 @@ public class Player {
 
                 // check for warnings
                 if (resumeNote == 0) {
-                    UserInterface.getInstance().canPlay(instrument, prevSong, false);
+                    UserInterface.getInstance().canPlay(prevSong, false);
                 }
 
                 // construct timeline from midi file

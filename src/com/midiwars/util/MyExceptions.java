@@ -6,10 +6,10 @@ package com.midiwars.util;
 public interface MyExceptions {
 
     /**
-     * Thrown when the default instrument listed
+     * Thrown when the window title listed
      * in the configurations file is invalid.
      */
-    class InvalidInstrumentException extends Exception {
+    class InvalidWindowTitle extends Exception {
 
     }
 

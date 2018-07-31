@@ -1,23 +1,20 @@
-package com.midiwars.logic.instruments;
+package com.midiwars.logic;
 
-import com.midiwars.logic.Keymap;
-import com.midiwars.logic.Player;
 import com.midiwars.logic.midi.MidiTimeline;
 import com.midiwars.logic.midi.NoteEvent;
-import com.midiwars.logic.MyRobot;
 
 import java.awt.*;
 import java.util.ArrayList;
 
 import static com.midiwars.logic.Player.State.PAUSED;
 import static com.midiwars.logic.Player.State.STOPPED;
-import static com.midiwars.logic.instruments.Instrument.Warning.*;
+import static com.midiwars.logic.Instrument.Warning.*;
 import static javax.sound.midi.ShortMessage.NOTE_ON;
 
 /**
  * A musical instrument.
  */
-public abstract class Instrument {
+public class Instrument {
 
     /* --- DEFINES --- */
 
@@ -37,12 +34,11 @@ public abstract class Instrument {
         PAUSES_TOO_LONG
     }
 
-
     /** Amount of time robot sleeps after a key bar change (ms). */
     public static final int ROBOT_SLEEP = 50;
 
-    /** Minimum amount of time needed in-between key bar changes (ms). */
-    public static final int KEYBAR_COOLDOWN = 200;
+    /** Default minimum amount of time needed in-between key bar changes (ms). */
+    public static final int DEFAULT_KEYBAR_COOLDOWN = 200;
 
     /** Upper limit to a note's duration (ms) - note will be played twice if duration is higher than this value. */
     public static final int NOTE_DURATION_LIMIT = 2250;
@@ -56,8 +52,8 @@ public abstract class Instrument {
 
     /* --- ATTRIBUTES --- */
 
-    /** Name of the instrument. */
-    private final String name;
+    /** Minimum amount of time needed in-between key bar changes (ms). */
+    private final int keyboardCooldown;
 
     /** True if the instrument can hold notes (ie note duration matters). */
     private final boolean canHold;
@@ -86,21 +82,36 @@ public abstract class Instrument {
     /**
      * Creates a new Instrument object.
      *
-     * @param name Name of the instrument.
      * @param canHold If the instrument can hold notes.
-     * @param keybars Each line represents a skill bar (usually an octave).
-     * @param idleKeybarIndex The active key bar before and after the midi timeline is played.
      */
-    public Instrument(String name, boolean canHold, int [][] keybars, int idleKeybarIndex) {
+    public Instrument(boolean canHold) {
 
-        this.name = name;
+        this(canHold, DEFAULT_KEYBAR_COOLDOWN);
+    }
+
+
+    /**
+     * Creates a new Instrument object.
+     *
+     * @param canHold If the instrument can hold notes.
+     * @param keyboardCooldown Minimum amount of time needed in-between key bar changes (ms).
+     */
+    public Instrument(boolean canHold, int keyboardCooldown) {
+
+        if (keyboardCooldown < 0) keyboardCooldown = DEFAULT_KEYBAR_COOLDOWN;
+
+        this.keyboardCooldown = keyboardCooldown;
         this.canHold = canHold;
-        this.keybars = keybars;
-        this.idleKeybarIndex = idleKeybarIndex;
-        activeKeybarIndex = idleKeybarIndex;
         robot = null;
         previousKeybarChange = -1;
         heldKeybind = -1;
+        idleKeybarIndex = 1;
+        activeKeybarIndex = idleKeybarIndex;
+        keybars = new int[][] {
+                {48, 50, 52, 53, 55, 57, 59, 60},
+                {60, 62, 64, 65, 67, 69, 71, 72},
+                {72, 74, 76, 77, 79, 81, 83, 84}
+        };
     }
 
 
@@ -294,8 +305,8 @@ public abstract class Instrument {
                 int deltaKeybarChange = (int) (System.currentTimeMillis() - previousKeybarChange);
 
                 // check if it needs to wait before changing key bar
-                if (deltaKeybarChange < KEYBAR_COOLDOWN) {
-                    wait = KEYBAR_COOLDOWN - deltaKeybarChange;
+                if (deltaKeybarChange < keyboardCooldown) {
+                    wait = keyboardCooldown - deltaKeybarChange;
                 }
 
                 robot.delay(wait);
@@ -510,7 +521,7 @@ public abstract class Instrument {
                 boolean exit = false;
 
                 // change is too fast, key bar change cooldown hasn't passed yet
-                if (deltaKeybarChange < Math.abs(deltaKeybarIndex) * KEYBAR_COOLDOWN) {
+                if (deltaKeybarChange < Math.abs(deltaKeybarIndex) * keyboardCooldown) {
                     exit = true;
                 }
 

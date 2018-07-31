@@ -1,9 +1,6 @@
 package com.midiwars.logic;
 
-import com.midiwars.logic.instruments.Instrument;
-import com.midiwars.logic.instruments.Instrument.*;
-import com.midiwars.logic.instruments.InstrumentFactory;
-import com.midiwars.util.MyExceptions.InvalidInstrumentException;
+import com.midiwars.logic.Instrument.*;
 import com.midiwars.util.MyExceptions.MidiPathNotFoundException;
 import com.midiwars.util.MyExceptions.MidifilesNotFoundException;
 import com.midiwars.logic.midi.MidiTimeline;
@@ -34,6 +31,9 @@ public class MidiWars {
 
     /* --- ATTRIBUTES --- */
 
+    /** Title of the window to track. */
+    private String windowTitle;
+
     /** Path to where midi files are stored. */
     private String midiPath;
 
@@ -49,14 +49,12 @@ public class MidiWars {
     /**
      * Creates a new MidiWars object.
      *
-     * @throws InvalidInstrumentException If default instrument listed in the configurations file is invalid.
      * @throws IOException If couldn't extract configs from resources.
      * @throws MidiPathNotFoundException If default path listed in the configurations file is invalid.
-     * @throws NullPointerException If configurations file doesn't have required format.
      * @throws ParserConfigurationException If there was a configuration error within the parser.
      * @throws SAXException If couldn't parse configurations file.
      */
-    public MidiWars() throws InvalidInstrumentException, IOException, MidiPathNotFoundException, NullPointerException, ParserConfigurationException, SAXException {
+    public MidiWars() throws IOException, MidiPathNotFoundException, ParserConfigurationException, SAXException {
 
         loadConfigs();
 
@@ -67,7 +65,6 @@ public class MidiWars {
     /**
      * Plays the given midi file or playlist.
      *
-     * @param instrument Instrument to play with.
      * @param filename Name of midi file / playlist to play.
      *
      * @throws AWTException If the platform configuration does not allow low-level input control.
@@ -78,7 +75,7 @@ public class MidiWars {
      * @throws ParserConfigurationException If there was a configuration error within the parser.
      * @throws SAXException If couldn't parse playlist file.
      */
-    public void play(Instrument instrument, String filename) throws AWTException, InterruptedException, InvalidMidiDataException, IOException, MidifilesNotFoundException, ParserConfigurationException, SAXException {
+    public void play(String filename) throws AWTException, InterruptedException, InvalidMidiDataException, IOException, MidifilesNotFoundException, ParserConfigurationException, SAXException {
 
         if (filename.endsWith(".xml")) {
 
@@ -99,17 +96,6 @@ public class MidiWars {
             boolean shuffle = doc.getDocumentElement().getElementsByTagName("shuffle").getLength() > 0;
             boolean repeat = doc.getDocumentElement().getElementsByTagName("repeat").getLength() > 0;
 
-            // instrument priority: command > playlist > default
-            if (instrument == null) {
-                NodeList instruments = doc.getDocumentElement().getElementsByTagName("instrument");
-                if (instruments.getLength() > 0) {
-                    instrument = InstrumentFactory.newInstrument(instruments.item(0).getTextContent());
-                }
-            }
-            if (instrument == null) {
-                instrument = defaultInstrument;
-            }
-
             // check if midifiles are valid
             for (String midifile : midifiles) {
                 File file = new File(midifile);
@@ -119,17 +105,11 @@ public class MidiWars {
             }
 
             // play list
-            player.play(midifiles, shuffle, repeat, instrument);
+            player.play(midifiles, shuffle, repeat, defaultInstrument);
         }
         else {
-
-            // default instrument
-            if (instrument == null) {
-                instrument = defaultInstrument;
-            }
-
             // play
-            player.play(new String[] {midiPath + filename}, false, false, instrument);
+            player.play(new String[] {midiPath + filename}, false, false, defaultInstrument);
         }
     }
 
@@ -196,7 +176,6 @@ public class MidiWars {
     /**
      * Checks if the given midi file can be played by the given instrument.
      *
-     * @param instrument Instrument to play given file with.
      * @param filepath Path of midi file to play.
      *
      * @return List of warnings.
@@ -204,18 +183,14 @@ public class MidiWars {
      * @throws InvalidMidiDataException If midi file is invalid.
      * @throws IOException If can't open file.
      *
-     * @see com.midiwars.logic.instruments.Instrument.Warning
+     * @see Instrument.Warning
      */
-    public ArrayList<Warning> canPlay(Instrument instrument, String filepath) throws InvalidMidiDataException, IOException {
+    public ArrayList<Warning> canPlay(String filepath) throws InvalidMidiDataException, IOException {
 
         // construct timeline from midi file
         MidiTimeline midiTimeline = new MidiTimeline(midiPath + filepath);
 
-        if (instrument == null) {
-            instrument = defaultInstrument;
-        }
-
-        return instrument.canPlay(midiTimeline);
+        return defaultInstrument.canPlay(midiTimeline);
     }
 
 
@@ -223,14 +198,12 @@ public class MidiWars {
      * Parses configuration file
      * and loads necessary info.
      *
-     * @throws InvalidInstrumentException If default instrument listed in the configurations file is invalid.
      * @throws IOException If couldn't extract configs from resources.
      * @throws MidiPathNotFoundException If default path listed in the configurations file is invalid.
-     * @throws NullPointerException If configurations file doesn't have required format.
      * @throws ParserConfigurationException If there was a configuration error within the parser.
      * @throws SAXException If couldn't parse configurations file.
      */
-    private void loadConfigs() throws InvalidInstrumentException, IOException, MidiPathNotFoundException, NullPointerException, ParserConfigurationException, SAXException {
+    private void loadConfigs() throws IOException, MidiPathNotFoundException, ParserConfigurationException, SAXException {
 
         // extract configs in case it doesn't already exist
         File configs = new File(CONFIGPATH);
@@ -246,23 +219,44 @@ public class MidiWars {
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(configs);
 
-        // get first occurrence only
-        midiPath = doc.getDocumentElement().getElementsByTagName("midipath").item(0).getTextContent();
-        defaultInstrument = InstrumentFactory.newInstrument(doc.getDocumentElement().getElementsByTagName("instrument").item(0).getTextContent());
+        try {
 
-        // make sure path has a trailing slash
-        if (!midiPath.endsWith("/") && !midiPath.endsWith("\\")) {
-            midiPath += File.separator;
-        }
+            // get first occurrence only
+            midiPath = doc.getDocumentElement().getElementsByTagName("midipath").item(0).getTextContent();
 
-        // check if path is valid
-        File path = new File(midiPath);
-        if (!path.exists() || !path.isDirectory()) {
+            // make sure path has a trailing slash
+            if (!midiPath.endsWith("/") && !midiPath.endsWith("\\")) {
+                midiPath += File.separator;
+            }
+
+            // check if path is valid
+            File path = new File(midiPath);
+            if (!path.exists() || !path.isDirectory()) {
+                throw new MidiPathNotFoundException();
+            }
+
+        } catch (NullPointerException e) {
             throw new MidiPathNotFoundException();
         }
 
-        if (defaultInstrument == null) {
-            throw new InvalidInstrumentException();
+        try {
+
+            // get first occurrence only
+            int cd = Integer.parseInt(doc.getDocumentElement().getElementsByTagName("octavecd").item(0).getTextContent());
+
+            defaultInstrument = new Instrument(false, cd);
+
+        } catch (NullPointerException | NumberFormatException e) {
+            defaultInstrument = new Instrument(false);
+        }
+
+        try {
+
+            // get first occurrence only
+            windowTitle = doc.getDocumentElement().getElementsByTagName("windowtitle").item(0).getTextContent();
+
+        } catch (NullPointerException e) {
+            windowTitle = "TITLE OF TARGET WINDOW HERE";
         }
     }
 
@@ -274,5 +268,15 @@ public class MidiWars {
      */
     public String getMidiPath() {
         return midiPath;
+    }
+
+
+    /**
+     * Getter.
+     *
+     * @return {@link #windowTitle Window Title}.
+     */
+    public String getWindowTitle() {
+        return windowTitle;
     }
 }
