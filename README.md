@@ -57,7 +57,7 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 
 * Run the game in *Windowed Fullscreen*.
 
-- Don't use *any* modifier keys (Shift, Ctrl, Alt, etc) for game actions (dodging, jumping, flying, etc). Otherwise, you might find yourself doing those actions if you press those keys while typing in chat and playing a song at the same time.
+- Don't use any *modifier keys (Shift, Ctrl, Alt, etc)* for game actions (dodging, jumping, flying, etc). Otherwise, you might find yourself doing those actions if you press those keys while typing in chat and playing a song at the same time.
 
 ## Setup
 
@@ -75,7 +75,7 @@ In order for Midi Wars to work properly, you need to change your in-game key bin
 
 **Note:** The above keybinds are all *Numpad Keys*. If you don't have a *Numpad* in your keyboard, use an *on-screen keyboard* to set the in-game key bindings.
 
-In addition to those, if you're using the Windows version of Midi Wars, set `Enter` to open the chat and `Esc` to close it.
+In addition to those, if you're using the Windows version of Midi Wars, set *Enter* to open the chat and *Esc* to close it.
 
 ### Config.xml
 
@@ -162,9 +162,9 @@ The warning system is used to warn you when the midi file you are trying to play
 
 ### System Tray (windows-only)
 
-The system tray icon serves as an assurance that your actions aren't being monitored outside the game, since Midi Wars works basically like a key logger.
+The system tray icon serves as an assurance that your actions aren't being monitored outside the game, since Midi Wars works basically like a *key logger*.
 
-Therefore, the icon changes based on whether it is currently listening for key presses or not. The icon should **only ever be green while the game window is in the foreground**, meaning the keyboard hook is installed. **At any other time, the icon should be red**, meaning the keyboard hook is **not** installed.
+Therefore, the icon changes based on whether it is currently listening for key presses or not. The icon should **only ever be green while the game window is in the foreground**, meaning the *keyboard hook* is installed. **At any other time, the icon should be red**, meaning the *keyboard hook* is **not** installed.
 
 ## Bugs & Suggestions
 
@@ -186,7 +186,7 @@ Donations of any kind are **not needed** to keep Midi Wars running.
 
 If you'd still like to show your support, feel free to gift me *Guild Wars 2* related stuff. I'd be especially grateful for receiving musical instruments or activation keys for the full game and its expansions, since I only own a free account.
 
-*A simple e-mail with a thank you note would also be greatly appreciated!*
+*A simple thank you note would also be greatly appreciated!*
 
 **Region:** Europe  
 **IGN:** Nanasshie
