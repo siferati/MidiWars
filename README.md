@@ -4,7 +4,7 @@ Midi Wars is a cross-platform desktop application that translates midi data to k
 
 It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't even have a UI for the most part! One of the key aspects of Midi Wars is its CLI like interface. Simply open the in-game chat, type the respective command, and let the app do its thing.
 
-For *Frequently Asked Question* and *Troubleshooting* please take a look at the wiki.
+For *Frequently Asked Question* and *Troubleshooting* please take a look at the [wiki](https://github.com/tirafesi/MidiWars/wiki).
 
 ## Table of Contents
 
@@ -168,7 +168,7 @@ Therefore, the icon changes based on whether it is currently listening for key p
 
 Found a bug or have a suggestion?
 
-Create a new issue and I'll be sure to review it!
+Create a [new issue](https://github.com/tirafesi/MidiWars/issues/new) and I'll be sure to review it!
 
 ## Contributing
 
@@ -191,7 +191,7 @@ If you'd still like to show your support, feel free to gift me *Guild Wars 2* re
 
 ## Download
 
-Head to the releases page and download the most recent version from there.
+Head over to [releases](https://github.com/tirafesi/MidiWars/releases) and download the most recent version from there.
 
 Midi Wars automatically checks for updates on start, so you'll always be notified when a new version is available.
 
@@ -199,7 +199,7 @@ Midi Wars automatically checks for updates on start, so you'll always be notifie
 
 *Midi Wars is not related to any individual, company, software product or any other entity besides itself and its developer.*
 
-*Midi Wars and its developer are not responsible for any damage, of any kind, that may result  from the use of Midi Wars. This includes, but is not limited to, hardware malfunctions, account suspensions and account bans.*
+*Midi Wars and its developer are not responsible for any harm or damage, of any kind, that may result from the use of Midi Wars. This includes, but is not limited to, hardware malfunctions, account suspensions and account bans.*
 
 *Furthermore, Midi Wars and its developer hold no responsibility, of any kind, over the actions of those using Midi Wars.*
 
