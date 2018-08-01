@@ -33,7 +33,7 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 * Warning system, letting you know if your midi files have any problems.
 * And many more...
 
-<sub><sup>\* Only available on Windows.</sup></sub>
+<sub><sup>\* Only available on Windows.</sup></sub>  
 <sub><sup>\*\* Only available on Windows. This functionality is **not stable** - don't expect to type as fluidly as the regular chat.</sup></sub>
 ## Requirements
 
