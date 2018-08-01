@@ -49,7 +49,7 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 |:----------:|:-----------:|:-------------:|
 | one octave | two octaves | three octaves |
 
-* Before playing any song, instruments should be in the default position. If the instrument can play 2 octaves, the default position is the lowest octave. If the instrument can play 3 octaves, the default position is the middle octave.
+* Before playing any song, **instruments should be in the default position**. If the instrument can play 2 octaves, the default position is the lowest octave. If the instrument can play 3 octaves, the default position is the middle octave.
 
 ## Recommendations
 
