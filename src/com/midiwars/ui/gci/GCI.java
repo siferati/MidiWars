@@ -306,11 +306,11 @@ public class GCI extends UserInterface implements WinEventProc {
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
         } catch (InvalidMidiDataException e) {
-            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+            displayError(false, "Invalid midi data was encountered.\nPlease provide a valid midi file for playback.");
         } catch (IOException e) {
-            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
+            displayError(false, "Couldn't find the given midi file.\nPlease provide a valid filename.");
         } catch (MidifilesNotFoundException e) {
-            displayError(false, "Couldn't find the MIDI files listed in the playlist.\nPlease provide valid filenames.");
+            displayError(false, "Couldn't find the midi files listed in the playlist.\nPlease provide valid filenames.");
         } catch (ParserConfigurationException e) {
             displayError(false, "There was a configuration error within the parser.");
         } catch (SAXException e) {
@@ -339,9 +339,9 @@ public class GCI extends UserInterface implements WinEventProc {
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
         } catch (InvalidMidiDataException e) {
-            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+            displayError(false, "Invalid midi data was encountered.\nPlease provide a valid midi file for playback.");
         } catch (IOException e) {
-            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
+            displayError(false, "Couldn't find the given midi file.\nPlease provide a valid filename.");
         }
     }
 
@@ -366,9 +366,9 @@ public class GCI extends UserInterface implements WinEventProc {
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
         } catch (InvalidMidiDataException e) {
-            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+            displayError(false, "Invalid midi data was encountered.\nPlease provide a valid midi file for playback.");
         } catch (IOException e) {
-            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
+            displayError(false, "Couldn't find the given midi file.\nPlease provide a valid filename.");
         }
     }
 
@@ -382,9 +382,9 @@ public class GCI extends UserInterface implements WinEventProc {
         } catch (InterruptedException e) {
             displayError(true, "A thread was interrupted.");
         } catch (InvalidMidiDataException e) {
-            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+            displayError(false, "Invalid midi data was encountered.\nPlease provide a valid midi file for playback.");
         } catch (IOException e) {
-            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
+            displayError(false, "Couldn't find the given midi file.\nPlease provide a valid filename.");
         }
     }
 
@@ -398,14 +398,14 @@ public class GCI extends UserInterface implements WinEventProc {
         try {
             ArrayList<Warning> warnings = app.canPlay(filename);
             if (warnings.size() == 0 && explicit) {
-                trayIcon.displayMessage("No problems found", "MIDI file is ready for playback.", NONE);
+                trayIcon.displayMessage("No problems found", "midi file is ready for playback.", NONE);
             } else {
                 displayWarnings(warnings);
             }
         } catch (InvalidMidiDataException e) {
-            displayError(false, "Invalid MIDI data was encountered.\nPlease provide a valid MIDI file for playback.");
+            displayError(false, "Invalid midi data was encountered.\nPlease provide a valid midi file for playback.");
         } catch (IOException e) {
-            displayError(false, "Couldn't find the given MIDI file.\nPlease provide a valid filename.");
+            displayError(false, "Couldn't find the given midi file.\nPlease provide a valid filename.");
         }
     }
 

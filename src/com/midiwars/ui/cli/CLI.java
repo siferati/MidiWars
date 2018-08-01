@@ -57,8 +57,8 @@ public class CLI extends UserInterface {
 
         System.out.println("\nUsage: java -jar MidiWars.jar [command]");
         System.out.println("\nPossible commands:\n");
-        System.out.println("\tplay    <FILENAME>\tPlays the given MIDI file using the default instrument.\n");
-        System.out.println("\tcanplay <FILENAME>\tChecks if the given MIDI file can be properly played using the default instrument.");
+        System.out.println("\tplay    <FILENAME>\tPlays the given midi file or playlist.\n");
+        System.out.println("\tcanplay <FILENAME>\tChecks if the given midi file can be properly played.");
     }
 
 
@@ -94,15 +94,15 @@ public class CLI extends UserInterface {
             }
 
             if (warnings.size() == 0 && explicit) {
-                System.out.println("No problems found. MIDI file is ready for playback.");
+                System.out.println("No problems found. midi file is ready for playback.");
             }
         }
         catch (InvalidMidiDataException e) {
-            System.out.println("Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
+            System.out.println("Invalid midi data was encountered. Please provide a valid midi file for playback.");
             displayUsage();
         }
         catch (IOException e) {
-            System.out.println("Couldn't find the given MIDI file. Please provide a valid filename.");
+            System.out.println("Couldn't find the given midi file. Please provide a valid filename.");
             displayUsage();
         }
     }
@@ -129,15 +129,15 @@ public class CLI extends UserInterface {
         } catch (ParserConfigurationException e) {
             System.out.println("Error: There was a configuration error within the parser.");
         } catch (MidifilesNotFoundException e) {
-            System.out.println("Couldn't find the MIDI files listed in the playlist. Please provide valid filenames.");
+            System.out.println("Couldn't find the midi files listed in the playlist. Please provide valid filenames.");
             displayUsage();
         } catch (SAXException e) {
             System.out.println("Error: Couldn't parse playlist file.");
         } catch (InvalidMidiDataException e) {
-            System.out.println("Invalid MIDI data was encountered. Please provide a valid MIDI file for playback.");
+            System.out.println("Invalid midi data was encountered. Please provide a valid midi file for playback.");
             displayUsage();
         } catch (IOException e) {
-            System.out.println("Couldn't find the given MIDI file. Please provide a valid filename.");
+            System.out.println("Couldn't find the given midi file. Please provide a valid filename.");
             displayUsage();
         }
     }
