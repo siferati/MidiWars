@@ -4,13 +4,14 @@ Midi Wars is a cross-platform desktop application that translates midi data to k
 
 It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't even have a UI for the most part! One of the key aspects of Midi Wars is its CLI like interface. Simply open the in-game chat, type the respective command, and let the app do its thing.
 
+For *Frequently Asked Question* and *Troubleshooting* please take a look at the wiki.
+
 ## Table of Contents
 
 * [Introduction](#midi-wars)
 * [Features](#features)
 * [Requirements](#requirements)
 * [Restrictions](#restrictions)
-* [Notes](#notes)
 * [Recommendations](#recommendations)
 * [Setup](#setup)
 * [Usage](#usage)
@@ -27,13 +28,13 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 * Play any song inside your favorite game using its instruments.
 * Create playlists.
 * Intuitive Music Player like controls, with support for keyboard media keys. \*
-* Type in chat while playing. *(yes, that's right! - you can actually type in chat and talk to people while your character plays music!)* \*
+* Type in chat while playing. *(yes, that's right! - you can actually type in chat and talk to people while your character plays music!)* \*\*
 * Non-intrusive, CLI like interface.
 * Warning system, letting you know if your midi files have any problems.
 * And many more...
 
 <sub><sup>\* Only available on Windows.</sup></sub>
-
+<sub><sup>\*\* Only available on Windows. This functionality is **not stable** - don't expect to type as fluidly as the regular chat.</sup></sub>
 ## Requirements
 
 * Java Runtime Environment 9 or higher
@@ -47,13 +48,6 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 | ![](res/one.png) | ![](res/two.png) | ![](res/three.png) |
 |:----------:|:-----------:|:-------------:|
 | one octave | two octaves | three octaves |
-
-## Notes
-
-* If, for whatever reason, the app crashes, open `log.txt` to see what went wrong.
-* Though Midi Wars allows for typing while playing, this functionality is **not stable** - don't expect to type as fluidly as the regular chat.
-* If, for whatever reason, the chat isn't properly closed and you start seeing random numbers appearing on it, simply close it manually.
-* You'll probably have difficulty typing *modifier keys* in chat while playing, especially when playing songs with faster tempos, such as pressing `Shift + 1` for the *exclamation mark*. That's because modifier keys need to be released when playing a note. Just keep trying and press the keys as fast as you can - you'll eventually be able to type what you want.
 
 ## Recommendations
 
