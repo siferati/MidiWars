@@ -4,7 +4,7 @@ Midi Wars is a cross-platform desktop application that translates midi data to k
 
 It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't even have a UI for the most part! One of the key aspects of Midi Wars is its CLI like interface. Simply open the in-game chat, type the respective command, and let the app do its thing.
 
-For *Frequently Asked Question* and *Troubleshooting* please take a look at the [wiki](https://github.com/tirafesi/MidiWars/wiki).
+*Frequently Asked Question* and *Troubleshooting* can be found in the [wiki](https://github.com/tirafesi/MidiWars/wiki).
 
 ## Table of Contents
 
