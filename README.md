@@ -19,7 +19,6 @@ It has a very clean, non-intrusive, minimal User Interface - in fact, it doesn't
 * [User Interface](#user-interface)
 * [Bugs & Suggestions](#bugs-&-suggestions)
 * [Contributing](#contributing)
-* [Donations](#donations)
 * [Download](#download)
 * [Disclaimer](#disclaimer)
 
@@ -179,17 +178,6 @@ If you'd like to contribute to the project, feel free to submit a pull request w
 You're also welcome to send me an e-mail with any questions you might have.
 
 If you're an artist looking to contribute, send me an e-mail with some work samples. I'd love to have some decent looking icons for the system tray. *(since the icons I made are basically just a colored circle! heh)*
-
-## Donations
-
-Donations of any kind are **not needed** to keep Midi Wars running.
-
-If you'd still like to show your support, feel free to gift me *Guild Wars 2* related stuff. I'd be especially grateful for receiving musical instruments or activation keys for the full game and its expansions, since I only own a free account.
-
-*A simple thank you note would also be greatly appreciated!*
-
-**Region:** Europe  
-**IGN:** Nanasshie
 
 ## Download
 
